@@ -26,3 +26,10 @@ func WithPriority(priority int) workOption {
 		w.priority = priority
 	}
 }
+
+// WithAdjustPriority ads an adjustment priorty function to the workItem such that it's priority can be dynamically adjusted in queue
+func WithAdjustPriority(adjustment func() int) workOption {
+	return func(w *workItem) {
+		w.adjustPriority = adjustment
+	}
+}

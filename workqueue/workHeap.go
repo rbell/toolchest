@@ -6,14 +6,30 @@
 
 package workqueue
 
+import "container/heap"
+
 type workItem struct {
-	workToDo Work
-	priority int
-	index    int
+	workToDo       Work
+	adjustPriority func() int
+	priority       int
+	index          int
 }
 
 // workHeap implements heap interface for prioritizing work to be worked on when queued
 type workHeap []*workItem
+
+func (wh workHeap) AdjustPriorities() {
+	for _, workItem := range wh {
+		wi := workItem
+		if wi.adjustPriority != nil {
+			priority := wi.adjustPriority()
+			if priority != wi.priority {
+				wi.priority = priority
+				heap.Fix(&wh, wi.index)
+			}
+		}
+	}
+}
 
 // Len returns the length of the workHeap
 func (wh workHeap) Len() int {

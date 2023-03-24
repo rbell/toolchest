@@ -127,9 +127,9 @@ func (w *Queue) start() {
 	}
 
 	// Process work
-outer:
+outsideFor:
 	for {
-	inner:
+	insideFor:
 		select {
 		case work := <-w.workChan:
 			if work != nil {
@@ -137,7 +137,7 @@ outer:
 				if w.workQueue.Len() == 0 {
 					select {
 					case workerCh <- work.workToDo:
-						break inner
+						break insideFor
 					default:
 					}
 				}
@@ -147,6 +147,7 @@ outer:
 				} else {
 					// queue is full, block and wait for worker to finish a task then add work to queue
 					<-workerSemaphore
+					w.workQueue.AdjustPriorities()
 					wtemp := heap.Pop(&w.workQueue).(*workItem).workToDo
 					workerCh <- wtemp
 					w.workQueue.Push(work)
@@ -155,11 +156,12 @@ outer:
 		case <-workerSemaphore:
 			// worker done, pop and start next work (if anything in queue)
 			if w.workQueue.Len() > 0 {
+				w.workQueue.AdjustPriorities()
 				wtemp := heap.Pop(&w.workQueue).(*workItem).workToDo
 				workerCh <- wtemp
 			}
 		case <-w.stopSignal:
-			break outer
+			break outsideFor
 		}
 	}
 
