@@ -93,3 +93,49 @@ func TestWorkHeap_Priority_Pop(t *testing.T) {
 	assert.Equal(t, work2, result)
 	assert.Len(t, wh, 2)
 }
+
+func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {
+	// setup
+	wh := make(workHeap, 0, 10)
+	heap.Init(&wh)
+
+	work1 := &workItem{
+		workToDo: func() error {
+			return nil
+		},
+		adjustPriority: func() int {
+			return 1
+		},
+		priority: 2,
+		index:    1,
+	}
+	heap.Push(&wh, work1)
+	work2 := &workItem{
+		workToDo: func() error {
+			return nil
+		},
+		adjustPriority: func() int {
+			return 2
+		},
+		priority: 1,
+		index:    1,
+	}
+	heap.Push(&wh, work2)
+	work3 := &workItem{
+		workToDo: func() error {
+			return nil
+		},
+		priority: 2,
+		index:    1,
+	}
+	heap.Push(&wh, work3)
+
+	// test
+	wh.AdjustPriorities()
+	result := heap.Pop(&wh)
+
+	// assert
+	// Pop should pop priority 1 over work with a greater priority number
+	assert.Equal(t, work1, result)
+	assert.Len(t, wh, 2)
+}
