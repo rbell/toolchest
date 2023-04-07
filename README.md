@@ -10,6 +10,10 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - Error monitoring
   - Prioritizing work submitted to queue
   - Stopping and breaking the queue
+- ValidationError
+  - Facilitates error reflecting validation issues to a user. 
+  - Supports warnings and errors
+  - Reflects validation errors over nested types (i.e. Customer has an address)
 - Additional tools to come!
 
 ## Contribution
