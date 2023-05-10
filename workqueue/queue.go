@@ -22,7 +22,7 @@ type workOption func(item *workItem)
 // Queue allow work to be queued up and worked on in a set number of go routines
 type Queue struct {
 	workerCount      int
-	queueLength      int
+	queueLength      *atomic.Int32
 	workChan         chan *workItem
 	workQueue        workHeap
 	errChan          chan error
@@ -37,7 +37,7 @@ type Queue struct {
 func NewQueue(options ...WorkQueueOption) *Queue {
 	wq := &Queue{
 		workerCount:      runtime.NumCPU(),
-		queueLength:      runtime.NumCPU() * 2,
+		queueLength:      &atomic.Int32{},
 		stopSignal:       make(chan struct{}),
 		errChan:          make(chan error),
 		errSubScriberMux: &sync.Mutex{},
@@ -45,13 +45,14 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 		stopped:          atomic.Bool{},
 		breaked:          false,
 	}
+	wq.queueLength.Store(int32(runtime.NumCPU() * 2))
 	wq.stopped.Store(false)
 	for _, o := range options {
 		o(wq)
 	}
 
 	wq.workChan = make(chan *workItem)
-	wq.workQueue = make(workHeap, 0, wq.queueLength)
+	wq.workQueue = make(workHeap, 0, wq.queueLength.Load())
 
 	go wq.start()
 
@@ -83,6 +84,11 @@ func (w *Queue) Errors() chan error {
 func (w *Queue) Stop() {
 	w.stopped.Store(true)
 	w.stopSignal <- struct{}{}
+}
+
+// ResizeQueueLength adjusts the size of the queue
+func (w *Queue) ResizeQueueLength(length int) {
+	w.queueLength.Store(int32(length))
 }
 
 // Break stops the queue form accepting any work and any work in queue is skipped
@@ -142,8 +148,9 @@ outsideFor:
 					}
 				}
 				// Workers are busy and placing the workToDo on the channel failed - queue it on prioritized queue
-				if w.workQueue.Len() < w.queueLength {
+				if w.workQueue.Len() < int(w.queueLength.Load()) {
 					heap.Push(&w.workQueue, work)
+					w.workQueue.AdjustPriorities()
 				} else {
 					// queue is full, block and wait for worker to finish a task then add work to queue
 					<-workerSemaphore
