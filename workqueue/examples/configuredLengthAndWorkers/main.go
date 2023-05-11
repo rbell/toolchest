@@ -11,10 +11,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/rbell/toolchest/workqueue"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/rbell/toolchest/workqueue"
 )
 
 func main() {
