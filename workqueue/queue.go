@@ -8,14 +8,39 @@ package workqueue
 
 import (
 	"container/heap"
+	"fmt"
 	"runtime"
 	"sync"
 	"sync/atomic"
+
+	"github.com/google/uuid"
+)
+
+type workState int32
+
+// work states
+const (
+	IN_QUEUE workState = iota
+	IN_PROCESS
 )
 
 type Work func() error
 
 type WorkQueueOption func(*Queue)
+
+type QueuedWork struct {
+	id       uuid.UUID
+	name     string
+	priority int
+	index    int
+	state    *atomic.Int32
+}
+
+type workItem struct {
+	*QueuedWork
+	workToDo       Work
+	adjustPriority func() int
+}
 
 type workOption func(item *workItem)
 
@@ -24,13 +49,14 @@ type Queue struct {
 	workerCount      int
 	queueLength      *atomic.Int32
 	workChan         chan *workItem
-	workQueue        workHeap
+	workQueue        *workHeap
 	errChan          chan error
 	stopSignal       chan struct{}
 	errSubScriberMux *sync.Mutex
 	errorSubscribers []chan error
 	stopped          atomic.Bool
 	breaked          bool
+	workItems        *sync.Map
 }
 
 // NewQueue returns a reference to an initialized Queue
@@ -44,6 +70,7 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 		errorSubscribers: []chan error{},
 		stopped:          atomic.Bool{},
 		breaked:          false,
+		workItems:        &sync.Map{},
 	}
 	wq.queueLength.Store(int32(runtime.NumCPU() * 2))
 	wq.stopped.Store(false)
@@ -52,7 +79,7 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 	}
 
 	wq.workChan = make(chan *workItem)
-	wq.workQueue = make(workHeap, 0, wq.queueLength.Load())
+	wq.workQueue = newWorkHeap(int(wq.queueLength.Load()))
 
 	go wq.start()
 
@@ -61,13 +88,48 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 
 // QueueWork queues work to do on the workChan to be processed
 func (w *Queue) QueueWork(workToDo Work, options ...workOption) {
-	wi := &workItem{workToDo: workToDo, priority: 1}
+	wi := &workItem{
+		QueuedWork: &QueuedWork{
+			id:       uuid.New(),
+			priority: 1,
+			state:    &atomic.Int32{},
+		},
+
+		workToDo: workToDo,
+	}
 	for _, option := range options {
 		option(wi)
 	}
+
+	w.workItems.Store(wi.id, wi)
+
 	if !w.stopped.Load() {
 		w.workChan <- wi
 	}
+}
+
+// Dequeue removes from the queue the work item with the specified id.  If the work item is in process, then an error is returned.
+func (w *Queue) Dequeue(id uuid.UUID) error {
+	if i, ok := w.workItems.Load(id); ok {
+		wi := i.(*workItem)
+		if wi.state.Load() == int32(IN_QUEUE) {
+			w.workQueue.Remove(wi.id)
+			w.workItems.Delete(wi.id)
+		} else if wi.state.Load() == int32(IN_PROCESS) {
+			return fmt.Errorf("cannot delete work item %v because it is in process", id.String())
+		}
+	}
+	return nil
+}
+
+// WorkItems returns the current state of all queued work items
+func (w *Queue) WorkItems() []*QueuedWork {
+	result := []*QueuedWork{}
+	w.workItems.Range(func(key, value any) bool {
+		result = append(result, value.(*workItem).QueuedWork)
+		return true
+	})
+	return result
 }
 
 // Errors allows monitoring errors that occur on work submitted to queue
@@ -86,15 +148,15 @@ func (w *Queue) Stop() {
 	w.stopSignal <- struct{}{}
 }
 
-// ResizeQueueLength adjusts the size of the queue
-func (w *Queue) ResizeQueueLength(length int) {
-	w.queueLength.Store(int32(length))
-}
-
 // Break stops the queue form accepting any work and any work in queue is skipped
 func (w *Queue) Break() {
 	w.breaked = true
 	w.Stop()
+}
+
+// ResizeQueueLength adjusts the size of the queue
+func (w *Queue) ResizeQueueLength(length int) {
+	w.queueLength.Store(int32(length))
 }
 
 func (w *Queue) start() {
@@ -104,7 +166,7 @@ func (w *Queue) start() {
 		close(w.workChan)
 	}()
 
-	heap.Init(&w.workQueue)
+	heap.Init(w.workQueue)
 
 	// monitor for errors on a go routine
 	go func() {
@@ -125,7 +187,7 @@ func (w *Queue) start() {
 	}()
 
 	workerSemaphore := make(chan bool, w.workerCount)
-	workerCh := make(chan Work, w.workerCount)
+	workerCh := make(chan *workItem, w.workerCount)
 	defer close(workerCh)
 	defer close(workerSemaphore)
 	for i := 0; i < w.workerCount; i++ {
@@ -142,20 +204,20 @@ outsideFor:
 				// If queue is empty try to send directly to workers via workerCh
 				if w.workQueue.Len() == 0 {
 					select {
-					case workerCh <- work.workToDo:
+					case workerCh <- work:
 						break insideFor
 					default:
 					}
 				}
 				// Workers are busy and placing the workToDo on the channel failed - queue it on prioritized queue
 				if w.workQueue.Len() < int(w.queueLength.Load()) {
-					heap.Push(&w.workQueue, work)
+					heap.Push(w.workQueue, work)
 					w.workQueue.AdjustPriorities()
 				} else {
 					// queue is full, block and wait for worker to finish a task then add work to queue
 					<-workerSemaphore
 					w.workQueue.AdjustPriorities()
-					wtemp := heap.Pop(&w.workQueue).(*workItem).workToDo
+					wtemp := heap.Pop(w.workQueue).(*workItem)
 					workerCh <- wtemp
 					w.workQueue.Push(work)
 				}
@@ -164,7 +226,7 @@ outsideFor:
 			// worker done, pop and start next work (if anything in queue)
 			if w.workQueue.Len() > 0 {
 				w.workQueue.AdjustPriorities()
-				wtemp := heap.Pop(&w.workQueue).(*workItem).workToDo
+				wtemp := heap.Pop(w.workQueue).(*workItem)
 				workerCh <- wtemp
 			}
 		case <-w.stopSignal:
@@ -173,19 +235,21 @@ outsideFor:
 	}
 
 	// Finish any work left on queue
-	for _, work := range w.workQueue {
+	for _, work := range w.workQueue.items {
 		if !w.breaked {
-			workerCh <- work.workToDo
+			workerCh <- work
 		}
 	}
 }
 
-func (w *Queue) doWork(workCh chan Work, semaphore chan bool) {
-	for workToDo := range workCh {
-		err := workToDo()
+func (w *Queue) doWork(workCh chan *workItem, semaphore chan bool) {
+	for wi := range workCh {
+		wi.state.Store(int32(IN_PROCESS))
+		err := wi.workToDo()
 		if err != nil {
 			w.errChan <- err
 		}
+		w.workItems.Delete(wi.id)
 		semaphore <- true
 	}
 }

@@ -16,7 +16,7 @@ func WithWorkers(workerCount int) WorkQueueOption {
 // WithQueueLength sets the number of functions that can be queued up before routines queueing are blocked
 func WithQueueLength(queueLength int) WorkQueueOption {
 	return func(queue *Queue) {
-		queue.queueLength = queueLength
+		queue.queueLength.Store(int32(queueLength))
 	}
 }
 
@@ -27,9 +27,16 @@ func WithPriority(priority int) workOption {
 	}
 }
 
-// WithAdjustPriority ads an adjustment priorty function to the workItem such that it's priority can be dynamically adjusted in queue
+// WithAdjustPriority adds an adjustment priorty function to the workItem such that it's priority can be dynamically adjusted in queue
 func WithAdjustPriority(adjustment func() int) workOption {
 	return func(w *workItem) {
 		w.adjustPriority = adjustment
+	}
+}
+
+// WithName adds a name for the work (for reporting)
+func WithName(name string) workOption {
+	return func(item *workItem) {
+		item.name = name
 	}
 }
