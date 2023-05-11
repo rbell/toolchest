@@ -9,7 +9,11 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - Ability to configure queue length and number of go routines operating on queue
   - Error monitoring
   - Prioritizing work submitted to queue
+  - Option to name work submitted to queue for later reference
   - Stopping and breaking the queue
+  - Resize queue length
+  - Dequeue work in queue
+  - View work in queue and it's current state, priority and position in queue.
 - ValidationError
   - Facilitates error reflecting validation issues to a user. 
   - Supports warnings and errors
