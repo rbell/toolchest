@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/rbell/toolchest/workqueue"
@@ -46,33 +45,24 @@ func main() {
 		q.Enqueue(w.work, workqueue.WithPriority(w.priority), workqueue.WithName(fmt.Sprintf("Work Task %v", i)))
 	}
 
-	fmt.Println("Before Adding Prioritized Work")
+	fmt.Println("Before Adding Temporary Work")
 	printItems(q)
 
-	// Emulate situation where priority changes dynamically
-	priority := &atomic.Int32{}
-	priority.Store(99)
-	timer := time.NewTimer(time.Second * 3)
-	go func() {
-		<-timer.C
-		priority.Store(1)
-		time.Sleep(time.Second)
-		fmt.Println("After Priority Change")
-		printItems(q)
-	}()
-
-	// Queue prioritized task
+	// Queue new task
 	wg.Add(1)
-	q.Enqueue(func() error {
+	id := q.Enqueue(func() error {
 		defer wg.Done()
 		time.Sleep(time.Second)
 		fmt.Println("Done with prioritized work!")
 		return nil
-	}, workqueue.WithPriority(99), workqueue.WithName("Prioritized"), workqueue.WithAdjustPriority(func() int {
-		return int(priority.Load())
-	}))
+	}, workqueue.WithPriority(99), workqueue.WithName("Temporary"))
 
-	fmt.Println("After Queing Prioritized Work")
+	fmt.Println("After Queing Temprary Work")
+	printItems(q)
+
+	q.Dequeue(id)
+
+	fmt.Println("After Dequeue Temprary Work")
 	printItems(q)
 
 	wg.Wait()

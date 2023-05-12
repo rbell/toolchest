@@ -88,8 +88,7 @@ func (wh *workHeap) Pop() any {
 
 // Remove removes the work item with the id
 func (wh *workHeap) Remove(id uuid.UUID) {
-	wh.mux.Lock()
-	defer wh.mux.Unlock()
+	wh.mux.RLock()
 	position := -1
 	for _, wi := range wh.items {
 		if wi.id == id {
@@ -97,6 +96,7 @@ func (wh *workHeap) Remove(id uuid.UUID) {
 			break
 		}
 	}
+	wh.mux.RUnlock()
 	if position >= 0 {
 		heap.Remove(wh, position)
 	}

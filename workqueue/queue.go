@@ -61,7 +61,7 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 }
 
 // Enqueue queues work to do on the workChan to be processed
-func (w *Queue) Enqueue(workToDo Work, options ...workOption) {
+func (w *Queue) Enqueue(workToDo Work, options ...workOption) uuid.UUID {
 	wi := &workItem{
 		QueuedWork: &QueuedWork{
 			id:       uuid.New(),
@@ -80,6 +80,8 @@ func (w *Queue) Enqueue(workToDo Work, options ...workOption) {
 	if !w.stopped.Load() {
 		w.workChan <- wi
 	}
+
+	return wi.id
 }
 
 // Dequeue removes from the queue the work item with the specified id.  If the work item is in process, then an error is returned.
