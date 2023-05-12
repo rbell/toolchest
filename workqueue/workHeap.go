@@ -16,13 +16,13 @@ import (
 // workHeap implements heap interface for prioritizing work to be worked on when queued
 type workHeap struct {
 	items []*workItem
-	mux   *sync.Mutex
+	mux   *sync.RWMutex
 }
 
 func newWorkHeap(length int) *workHeap {
 	return &workHeap{
 		items: make([]*workItem, 0, length),
-		mux:   &sync.Mutex{},
+		mux:   &sync.RWMutex{},
 	}
 }
 
@@ -30,10 +30,10 @@ func (wh workHeap) AdjustPriorities() {
 	for _, workItem := range wh.items {
 		wi := workItem
 		if wi.adjustPriority != nil {
-			priority := wi.adjustPriority()
-			if priority != wi.priority {
-				wi.priority = priority
-				heap.Fix(&wh, wi.index)
+			newPriority := wi.adjustPriority()
+			if newPriority != wi.priority {
+				wi.priority = newPriority
+				heap.Fix(&wh, wi.position)
 			}
 		}
 	}
@@ -41,11 +41,15 @@ func (wh workHeap) AdjustPriorities() {
 
 // Len returns the length of the workHeap
 func (wh *workHeap) Len() int {
+	wh.mux.RLock()
+	defer wh.mux.RUnlock()
 	return len(wh.items)
 }
 
 // Less returns true if the work item at index i is less than the work item at index j
 func (wh *workHeap) Less(i, j int) bool {
+	wh.mux.RLock()
+	defer wh.mux.RUnlock()
 	return wh.items[i].priority < wh.items[j].priority
 }
 
@@ -54,8 +58,8 @@ func (wh *workHeap) Swap(i, j int) {
 	wh.mux.Lock()
 	defer wh.mux.Unlock()
 	wh.items[i], wh.items[j] = wh.items[j], wh.items[i]
-	wh.items[i].index = i
-	wh.items[j].index = j
+	wh.items[i].position = i
+	wh.items[j].position = j
 }
 
 // Push puts a work item on the heap
@@ -65,7 +69,7 @@ func (wh *workHeap) Push(x any) {
 	n := len(wh.items)
 	item := x.(*workItem)
 	item.state.Store(int32(IN_QUEUE))
-	item.index = n
+	item.position = n
 	wh.items = append(wh.items, item)
 }
 
@@ -76,8 +80,8 @@ func (wh *workHeap) Pop() any {
 	old := wh.items
 	n := len(old)
 	item := old[n-1]
-	old[n-1] = nil  // avoid memory leak
-	item.index = -1 // for safety
+	old[n-1] = nil     // avoid memory leak
+	item.position = -1 // for safety
 	wh.items = old[0 : n-1]
 	return item
 }
@@ -86,14 +90,14 @@ func (wh *workHeap) Pop() any {
 func (wh *workHeap) Remove(id uuid.UUID) {
 	wh.mux.Lock()
 	defer wh.mux.Unlock()
-	indx := 0
-	for i, wi := range wh.items {
+	position := -1
+	for _, wi := range wh.items {
 		if wi.id == id {
-			indx = i
+			position = wi.position
 			break
 		}
 	}
-	if indx > 0 {
-		wh.items = append(wh.items[:indx], wh.items[indx+1:]...)
+	if position >= 0 {
+		heap.Remove(wh, position)
 	}
 }

@@ -8,10 +8,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/rbell/toolchest/workqueue"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/rbell/toolchest/workqueue"
 )
 
 func main() {
@@ -38,7 +39,7 @@ func main() {
 	// Queue the work
 	for _, w := range work {
 		wg.Add(1)
-		q.QueueWork(w)
+		q.Enqueue(w)
 	}
 
 	wg.Wait()
