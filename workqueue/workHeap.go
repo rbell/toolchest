@@ -9,8 +9,6 @@ package workqueue
 import (
 	"container/heap"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 // workHeap implements heap interface for prioritizing work to be worked on when queued
@@ -87,16 +85,7 @@ func (wh *workHeap) Pop() any {
 }
 
 // Remove removes the work item with the id
-func (wh *workHeap) Remove(id uuid.UUID) {
-	wh.mux.RLock()
-	position := -1
-	for _, wi := range wh.items {
-		if wi.id == id {
-			position = wi.position
-			break
-		}
-	}
-	wh.mux.RUnlock()
+func (wh *workHeap) Remove(position int) {
 	if position >= 0 {
 		heap.Remove(wh, position)
 	}

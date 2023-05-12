@@ -89,7 +89,7 @@ func (w *Queue) Dequeue(id uuid.UUID) error {
 	if i, ok := w.workItems.Load(id); ok {
 		wi := i.(*workItem)
 		if wi.state.Load() == int32(IN_QUEUE) {
-			w.workQueue.Remove(wi.id)
+			w.workQueue.Remove(wi.position)
 			w.workQueue.AdjustPriorities()
 			w.workItems.Delete(wi.id)
 		} else if wi.state.Load() == int32(IN_PROGRESS) {
