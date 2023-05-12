@@ -16,32 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type workState int32
-
-// work states
-const (
-	IN_QUEUE workState = iota
-	IN_PROCESS
-)
-
-type Work func() error
-
-type WorkQueueOption func(*Queue)
-
-type QueuedWork struct {
-	id       uuid.UUID
-	name     string
-	priority int
-	index    int
-	state    *atomic.Int32
-}
-
-type workItem struct {
-	*QueuedWork
-	workToDo       Work
-	adjustPriority func() int
-}
-
 type workOption func(item *workItem)
 
 // Queue allow work to be queued up and worked on in a set number of go routines
@@ -86,8 +60,8 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 	return wq
 }
 
-// QueueWork queues work to do on the workChan to be processed
-func (w *Queue) QueueWork(workToDo Work, options ...workOption) {
+// Enqueue queues work to do on the workChan to be processed
+func (w *Queue) Enqueue(workToDo Work, options ...workOption) {
 	wi := &workItem{
 		QueuedWork: &QueuedWork{
 			id:       uuid.New(),
@@ -114,8 +88,9 @@ func (w *Queue) Dequeue(id uuid.UUID) error {
 		wi := i.(*workItem)
 		if wi.state.Load() == int32(IN_QUEUE) {
 			w.workQueue.Remove(wi.id)
+			w.workQueue.AdjustPriorities()
 			w.workItems.Delete(wi.id)
-		} else if wi.state.Load() == int32(IN_PROCESS) {
+		} else if wi.state.Load() == int32(IN_PROGRESS) {
 			return fmt.Errorf("cannot delete work item %v because it is in process", id.String())
 		}
 	}
@@ -212,7 +187,7 @@ outsideFor:
 				// Workers are busy and placing the workToDo on the channel failed - queue it on prioritized queue
 				if w.workQueue.Len() < int(w.queueLength.Load()) {
 					heap.Push(w.workQueue, work)
-					w.workQueue.AdjustPriorities()
+					//w.workQueue.AdjustPriorities()
 				} else {
 					// queue is full, block and wait for worker to finish a task then add work to queue
 					<-workerSemaphore
@@ -244,7 +219,7 @@ outsideFor:
 
 func (w *Queue) doWork(workCh chan *workItem, semaphore chan bool) {
 	for wi := range workCh {
-		wi.state.Store(int32(IN_PROCESS))
+		wi.state.Store(int32(IN_PROGRESS))
 		err := wi.workToDo()
 		if err != nil {
 			w.errChan <- err

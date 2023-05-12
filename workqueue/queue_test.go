@@ -33,7 +33,7 @@ func TestQueue_PerformsWork(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		priority := i % 2
-		q.QueueWork(work[i], WithPriority(priority))
+		q.Enqueue(work[i], WithPriority(priority))
 	}
 
 	// assert

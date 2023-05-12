@@ -8,9 +8,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/rbell/toolchest/workqueue"
 	"sync"
 	"time"
+
+	"github.com/rbell/toolchest/workqueue"
 )
 
 func main() {
@@ -43,7 +44,7 @@ func main() {
 
 	for _, w := range work {
 		wg.Add(1)
-		q.QueueWork(w.work, workqueue.WithPriority(w.priority))
+		q.Enqueue(w.work, workqueue.WithPriority(w.priority))
 	}
 
 	wg.Wait()

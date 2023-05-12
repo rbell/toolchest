@@ -25,7 +25,7 @@ func TestWorkHeap_Push(t *testing.T) {
 		},
 		QueuedWork: &QueuedWork{
 			priority: 1,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -48,7 +48,7 @@ func TestWorkHeap_Pop(t *testing.T) {
 		},
 		QueuedWork: &QueuedWork{
 			priority: 1,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -73,8 +73,9 @@ func TestWorkHeap_Priority_Pop(t *testing.T) {
 			return nil
 		},
 		QueuedWork: &QueuedWork{
-			priority: 1,
-			index:    -1,
+			name:     "work1",
+			priority: 3,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -84,8 +85,9 @@ func TestWorkHeap_Priority_Pop(t *testing.T) {
 			return nil
 		},
 		QueuedWork: &QueuedWork{
+			name:     "work2",
 			priority: 1,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -95,22 +97,24 @@ func TestWorkHeap_Priority_Pop(t *testing.T) {
 			return nil
 		},
 		QueuedWork: &QueuedWork{
+			name:     "work3",
 			priority: 2,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
 	heap.Push(wh, work3)
 
 	// test
-	result := heap.Pop(wh)
+	result1 := heap.Pop(wh)
+	result2 := heap.Pop(wh)
+	result3 := heap.Pop(wh)
 
 	// assert
-	// Pop should pop priority 1 over work with a greater priority number
-	expected := work2.QueuedWork
-	expected.index = -1
-	assert.Equal(t, expected, result.(*workItem).QueuedWork)
-	assert.Len(t, wh.items, 2)
+	// Popped results should be in priority order
+	assert.Equal(t, "work2", result1.(*workItem).QueuedWork.name)
+	assert.Equal(t, "work3", result2.(*workItem).QueuedWork.name)
+	assert.Equal(t, "work1", result3.(*workItem).QueuedWork.name)
 }
 
 func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {
@@ -127,7 +131,7 @@ func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {
 		},
 		QueuedWork: &QueuedWork{
 			priority: 2,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -141,7 +145,7 @@ func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {
 		},
 		QueuedWork: &QueuedWork{
 			priority: 1,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}
@@ -152,7 +156,7 @@ func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {
 		},
 		QueuedWork: &QueuedWork{
 			priority: 2,
-			index:    -1,
+			position: -1,
 			state:    &atomic.Int32{},
 		},
 	}

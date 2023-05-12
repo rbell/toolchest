@@ -40,7 +40,7 @@ func main() {
 
 	for _, w := range work {
 		wg.Add(1)
-		q.QueueWork(w)
+		q.Enqueue(w)
 	}
 
 	wg.Wait()
