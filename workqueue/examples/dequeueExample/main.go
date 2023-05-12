@@ -49,9 +49,7 @@ func main() {
 	printItems(q)
 
 	// Queue new task
-	wg.Add(1)
 	id := q.Enqueue(func() error {
-		defer wg.Done()
 		time.Sleep(time.Second)
 		fmt.Println("Done with prioritized work!")
 		return nil
