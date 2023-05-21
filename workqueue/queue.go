@@ -99,6 +99,20 @@ func (w *Queue) Dequeue(id uuid.UUID) error {
 	return nil
 }
 
+// AdjustPriority changes the priority of the queued work item with the uuid.
+func (w *Queue) AdjustPriority(id uuid.UUID, priority int) error {
+	if i, ok := w.workItems.Load(id); ok {
+		wi := i.(*workItem)
+		if wi.state.Load() == int32(IN_QUEUE) {
+			wi.priority = priority
+			w.workQueue.AdjustPriorities()
+		} else if wi.state.Load() == int32(IN_PROGRESS) {
+			return fmt.Errorf("cannot adjust prioroty on work item %v because it is in process", id.String())
+		}
+	}
+	return nil
+}
+
 // WorkItems returns the current state of all queued work items
 func (w *Queue) WorkItems() []*QueuedWork {
 	result := []*QueuedWork{}
