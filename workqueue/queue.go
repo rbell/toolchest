@@ -8,6 +8,7 @@ package workqueue
 
 import (
 	"container/heap"
+	"context"
 	"fmt"
 	"runtime"
 	"sync"
@@ -25,12 +26,13 @@ type Queue struct {
 	workChan         chan *workItem
 	workQueue        *workHeap
 	errChan          chan error
-	stopSignal       chan struct{}
 	errSubScriberMux *sync.Mutex
 	errorSubscribers []chan error
 	stopped          atomic.Bool
 	breaked          bool
 	workItems        *sync.Map
+	queueContext     context.Context
+	queueCancel      context.CancelFunc
 }
 
 // NewQueue returns a reference to an initialized Queue
@@ -38,7 +40,6 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 	wq := &Queue{
 		workerCount:      runtime.NumCPU(),
 		queueLength:      &atomic.Int32{},
-		stopSignal:       make(chan struct{}),
 		errChan:          make(chan error),
 		errSubScriberMux: &sync.Mutex{},
 		errorSubscribers: []chan error{},
@@ -46,6 +47,10 @@ func NewQueue(options ...WorkQueueOption) *Queue {
 		breaked:          false,
 		workItems:        &sync.Map{},
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	wq.queueContext = ctx
+	wq.queueCancel = cancel
 	wq.queueLength.Store(int32(runtime.NumCPU() * 2))
 	wq.stopped.Store(false)
 	for _, o := range options {
@@ -136,7 +141,7 @@ func (w *Queue) Errors() chan error {
 // Stop stops the queue from accepting work
 func (w *Queue) Stop() {
 	w.stopped.Store(true)
-	w.stopSignal <- struct{}{}
+	w.queueCancel()
 }
 
 // Break stops the queue form accepting any work and any work in queue is skipped
@@ -153,8 +158,8 @@ func (w *Queue) ResizeQueueLength(length int) {
 func (w *Queue) start() {
 	defer func() {
 		close(w.errChan)
-		close(w.stopSignal)
 		close(w.workChan)
+		w.queueCancel()
 	}()
 
 	heap.Init(w.workQueue)
@@ -168,7 +173,7 @@ func (w *Queue) start() {
 				for _, sub := range w.errorSubscribers {
 					sub <- e
 				}
-			case <-w.stopSignal:
+			case <-w.queueContext.Done():
 				stop = true
 			}
 			if stop {
@@ -206,12 +211,14 @@ outsideFor:
 					//w.workQueue.AdjustPriorities()
 				} else {
 					// queue is full, block and wait for worker to finish a task then add work to queue
+					fmt.Println("Waiting for free worker")
 					<-workerSemaphore
 					w.workQueue.AdjustPriorities()
 					wtemp := heap.Pop(w.workQueue).(*workItem)
 					workerCh <- wtemp
 					w.workQueue.Push(work)
 				}
+				fmt.Printf("Queue Length %v\n", w.workQueue.Len())
 			}
 		case <-workerSemaphore:
 			// worker done, pop and start next work (if anything in queue)
@@ -220,7 +227,7 @@ outsideFor:
 				wtemp := heap.Pop(w.workQueue).(*workItem)
 				workerCh <- wtemp
 			}
-		case <-w.stopSignal:
+		case <-w.queueContext.Done():
 			break outsideFor
 		}
 	}
