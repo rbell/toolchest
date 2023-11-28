@@ -37,13 +37,13 @@ func (s *GenericStack[T]) Push(value T) (id uint64) {
 		id:    s.currentKey.Add(1),
 		entry: value,
 	}
-	s.stack.Push(v)
+	heap.Push(s.stack, v)
 	return v.id
 }
 
 // Pop removes the next T from the stack and returns it
 func (s *GenericStack[T]) Pop() T {
-	return s.stack.Pop().(*stackEntry[T]).entry
+	return heap.Pop(s.stack).(*stackEntry[T]).entry
 }
 
 // Peek returns the value on the stack that was assigned the id requested.  IDNotFoundError returned if id not found.
@@ -58,15 +58,26 @@ func (s *GenericStack[T]) Peek(id uint64) (value T, err error) {
 	return
 }
 
+// Len returns the number of elements on the stack
+func (s *GenericStack[T]) Len() int {
+	return s.stack.Len()
+}
+
 // Implements container/heap, with push / pop acting in a FIFO order, where each element is a *stackEntry[T]
 type stack[T any] struct {
 	entries []*stackEntry[T]
 	mux     *sync.Mutex
 }
 
-func (s stack[T]) Len() int           { return len(s.entries) }
-func (s stack[T]) Less(i, j int) bool { return s.entries[i].id < s.entries[j].id }
-func (s stack[T]) Swap(i, j int)      { s.entries[i], s.entries[j] = s.entries[j], s.entries[i] }
+func (s *stack[T]) Len() int {
+	return len(s.entries)
+}
+func (s *stack[T]) Less(i, j int) bool {
+	return s.entries[i].id < s.entries[j].id
+}
+func (s *stack[T]) Swap(i, j int) {
+	s.entries[i], s.entries[j] = s.entries[j], s.entries[i]
+}
 
 func newStack[T any](initialSize int) *stack[T] {
 	result := &stack[T]{
@@ -78,7 +89,7 @@ func newStack[T any](initialSize int) *stack[T] {
 }
 
 // Push pushes x, which must be a *stackEntry[T], to the stack
-func (s stack[T]) Push(x any) {
+func (s *stack[T]) Push(x any) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
@@ -86,12 +97,12 @@ func (s stack[T]) Push(x any) {
 }
 
 // Pop pops and returns the next *stackEnctyr[T] from the stack
-func (s stack[T]) Pop() any {
+func (s *stack[T]) Pop() any {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 
 	old := s.entries
 	var result *stackEntry[T]
-	result, s.entries = old[0], old[1:]
+	result, s.entries = old[len(old)-1], old[:len(old)-1]
 	return result
 }
