@@ -24,7 +24,7 @@ type FifoMapCache[K comparable, V any] struct {
 	maxPartitions       int
 	capacity            int
 	count               atomic.Int64
-	sweepingWG          *sync.WaitGroup
+	sweepingMux         *sync.Mutex
 }
 
 type numPartitionCalculator func(capacity int) (int, int)
@@ -54,7 +54,7 @@ func NewFifoMapCache[K comparable, V any](ctx context.Context, capacity int, opt
 		partitionCapacity:   partitionLength,
 		valuePartitionIndex: NewSafeMap[K, uint64](0),
 		currentPartitionMux: &sync.RWMutex{},
-		sweepingWG:          &sync.WaitGroup{},
+		sweepingMux:         &sync.Mutex{},
 	}
 
 	go func() {
@@ -126,16 +126,15 @@ func (f *FifoMapCache[K, V]) getCurrentPartition() (*SafeMap[K, V], uint64) {
 	defer f.currentPartitionMux.Unlock()
 	newPartition := NewSafeMap[K, V](f.partitionCapacity)
 	f.currentPartitionId = f.partitions.Push(newPartition)
-	f.sweep()
+	go f.sweep()
 	return newPartition, f.currentPartitionId
 }
 
 // sweep removes partitions from the stack if the number of partitions exceeds the maxPartitions
 func (f *FifoMapCache[K, V]) sweep() {
 	// restrict to single sweep at a time
-	f.sweepingWG.Wait()
-	f.sweepingWG.Add(1)
-	defer f.sweepingWG.Done()
+	f.sweepingMux.Lock()
+	defer f.sweepingMux.Unlock()
 
 	if f.partitions.Len() > f.maxPartitions {
 		numToPop := f.partitions.Len() - f.maxPartitions
