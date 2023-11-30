@@ -114,6 +114,22 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 	f.valuePartitionIndex.Set(key, partitionId)
 }
 
+func (f *FifoMapCache[K, V]) Delete(key K) {
+	if partitionId := f.valuePartitionIndex.Get(key); partitionId > 0 {
+		partition, _ := f.partitions.Peek(partitionId)
+		if partition != nil {
+			partition.Delete(key)
+			f.valuePartitionIndex.Delete(key)
+			f.count.Add(-1)
+		}
+	}
+}
+
+// Len returns the length of the map
+func (f *FifoMapCache[K, V]) Len() int {
+	return int(f.count.Load())
+}
+
 // getCurrentPartition returns reference to the currentPartition which new key/values should be added to
 func (f *FifoMapCache[K, V]) getCurrentPartition() (*SafeMap[K, V], uint64) {
 	f.currentPartitionMux.RLock()

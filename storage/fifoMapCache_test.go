@@ -179,3 +179,123 @@ func TestFifoMapCache_GetAfterSweep_ReturnsNonZeroValue(t *testing.T) {
 	// assert
 	assert.Equal(t, 12, value, "Expected value to be 12")
 }
+
+func TestFifoMapCache_ContainsAfterSweep_ReturnsFalse(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+
+	// test
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+	contains := m.Contains(1)
+
+	// assert
+	assert.False(t, contains, "Expected value to be false")
+}
+
+func TestFifoMapCache_Delete_Deletes(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	m.Set(1, 1)
+
+	// test
+	m.Delete(1)
+
+	// assert
+	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.False(t, m.Contains(1), "Expected value to be deleted")
+}
+
+func TestFifoMapCache_DeleteAfterSweep_Deletes(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+
+	// test
+	m.Delete(12)
+
+	// assert
+	assert.Equal(t, int64(8), m.count.Load(), "Expected count to be 8")
+	assert.False(t, m.Contains(12), "Expected value to be deleted")
+}
+
+func TestFifoMapCache_ContainsAfterSweep_ReturnsTrue(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+
+	// test
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+	contains := m.Contains(12)
+
+	// assert
+	assert.True(t, contains, "Expected value to be true")
+}
+
+func TestFifoMapCache_Len_ReturnsZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 0, length, "Expected length to be 0")
+}
+
+func TestFifoMapCache_Len_ReturnsNonZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	m.Set(1, 1)
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 1, length, "Expected length to be 1")
+}
+
+func TestFifoMapCache_LenAfterSweep_ReturnsNonZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 9, length, "Expected length to be 9")
+}
+
+func TestFifoMapCache_LenAfterDelete_ReturnsNonZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 5; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(4)
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 4, length, "Expected length to be 4")
+}
