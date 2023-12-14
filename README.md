@@ -18,6 +18,13 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - Facilitates error reflecting validation issues to a user. 
   - Supports warnings and errors
   - Reflects validation errors over nested types (i.e. Customer has an address)
+- Storage
+  - SafeMap
+    - A thread safe map
+  - FifoMapCache
+    - A thread safe map with a maximum size.  When the cache is full, the oldest entries are evicted.
+  - GenericStack
+    - A generic stack data structure
 - Additional tools to come!
 
 ## Contribution
