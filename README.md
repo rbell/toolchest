@@ -25,6 +25,9 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
     - A thread safe map with a maximum size.  When the cache is full, the oldest entries are evicted.
   - GenericStack
     - A generic stack data structure
+- Propositions
+  - Provides a set of proposition functions in Go. These functions allow evaluations of various conditions on various types, each function returning either true or false.
+
 - Additional tools to come!
 
 ## Contribution
