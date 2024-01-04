@@ -228,4 +228,6 @@ p := func(v int) bool { return v > 3 }
 fmt.Println(propositions.SlicePropositionAll(s, p)) // Output: true
 ```
 
-Please replace the `fmt.Println` with your own logic as needed.
+## License
+
+This Source Code Form is subject to the terms of the Apache Public License, version 2.0. If a copy of the APL was not distributed with this file, you can obtain one at https://www.apache.org/licenses/LICENSE-2.0.txt.
