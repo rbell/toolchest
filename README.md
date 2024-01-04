@@ -27,6 +27,8 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
     - A generic stack data structure
 - Propositions
   - Provides a set of proposition functions in Go. These functions allow evaluations of various conditions on various types, each function returning either true or false.
+- SliceOps
+  - Provides a set of utility functions for working with slices in Go. These functions include operations such as cutting, removing, inserting, filtering, pushing, popping, and more.
 
 - Additional tools to come!
 
