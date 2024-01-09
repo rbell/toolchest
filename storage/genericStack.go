@@ -63,6 +63,15 @@ func (s *GenericStack[T]) Len() int {
 	return s.stack.Len()
 }
 
+// Values returns a slice of all the values on the stack
+func (s *GenericStack[T]) Values() []T {
+	values := make([]T, 0, s.stack.Len())
+	for _, v := range s.stack.entries {
+		values = append(values, v.entry)
+	}
+	return values
+}
+
 // Implements container/heap, with push / pop acting in a FIFO order, where each element is a *stackEntry[T]
 type stack[T any] struct {
 	entries []*stackEntry[T]
@@ -105,6 +114,6 @@ func (s *stack[T]) Pop() any {
 	var result *stackEntry[T]
 	result, s.entries = old[len(old)-1], old[:len(old)-1]
 	cpy := *result // dereference and return another reference to the value
-	result = nil // nil out the reference to the popped stackEntry in the backing array of the entries to protect memory
+	result = nil   // nil out the reference to the popped stackEntry in the backing array of the entries to protect memory
 	return &cpy
 }

@@ -130,6 +130,31 @@ func (f *FifoMapCache[K, V]) Len() int {
 	return int(f.count.Load())
 }
 
+// Clear clears the map
+func (f *FifoMapCache[K, V]) Clear() {
+	f.partitions = NewGenericStack[*SafeMap[K, V]](f.maxPartitions)
+	f.valuePartitionIndex = NewSafeMap[K, uint64](0)
+	f.count.Store(0)
+}
+
+// Keys returns a slice of keys
+func (f *FifoMapCache[K, V]) Keys() []K {
+	keys := make([]K, 0, f.Len())
+	for _, partition := range f.partitions.Values() {
+		keys = append(keys, partition.Keys()...)
+	}
+	return keys
+}
+
+// Values returns a slice of values
+func (f *FifoMapCache[K, V]) Values() []V {
+	values := make([]V, 0, f.Len())
+	for _, partition := range f.partitions.Values() {
+		values = append(values, partition.Values()...)
+	}
+	return values
+}
+
 // getCurrentPartition returns reference to the currentPartition which new key/values should be added to
 func (f *FifoMapCache[K, V]) getCurrentPartition() (*SafeMap[K, V], uint64) {
 	f.currentPartitionMux.RLock()

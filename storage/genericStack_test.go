@@ -169,3 +169,37 @@ func TestGenericStack_Len_ReturnsNumberOfEntriesAfterPushAndPop(t *testing.T) {
 	// assert
 	assert.Equal(t, 1, length, "Expected length to be 1")
 }
+
+func TestGenericStack_Values_ReturnsEmptySlice(t *testing.T) {
+	// setup
+	s := NewGenericStack[int](0)
+
+	// test
+	values := s.Values()
+
+	// assert
+	assert.Lenf(t, values, 0, "Expected values to be empty")
+}
+
+func TestGenericStack_Values_ReturnsValuesInOrder(t *testing.T) {
+	// setup
+	s := NewGenericStack[int](0)
+	s.Push(1)
+	s.Push(2)
+	s.Push(3)
+	s.Push(4)
+	s.Push(5)
+	s.Push(6)
+
+	// test
+	values := s.Values()
+
+	// assert
+	assert.Lenf(t, values, 6, "Expected values to have 6 entries")
+	assert.Equal(t, 1, values[0], "Expected first value to be 1")
+	assert.Equal(t, 2, values[1], "Expected second value to be 2")
+	assert.Equal(t, 3, values[2], "Expected third value to be 3")
+	assert.Equal(t, 4, values[3], "Expected fourth value to be 4")
+	assert.Equal(t, 5, values[4], "Expected fifth value to be 5")
+	assert.Equal(t, 6, values[5], "Expected sixth value to be 6")
+}

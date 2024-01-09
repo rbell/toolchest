@@ -8,6 +8,7 @@ package storage
 
 import (
 	"context"
+	"github.com/rbell/toolchest/propositions"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -298,4 +299,191 @@ func TestFifoMapCache_LenAfterDelete_ReturnsNonZero(t *testing.T) {
 
 	// assert
 	assert.Equal(t, 4, length, "Expected length to be 4")
+}
+
+func TestFifoMapCache_Keys_ReturnsEmptySlice(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Len(t, keys, 0, "Expected keys to be empty")
+}
+
+func TestFifoMapCache_Keys_ReturnsKeysInOrder(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	m.Set(2, 2)
+	m.Set(1, 1)
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Len(t, keys, 2, "Expected keys to have 2 entries")
+	assert.Equal(t, 2, keys[0], "Expected first key to be 2")
+	assert.Equal(t, 1, keys[1], "Expected second key to be 1")
+}
+
+func TestFifoMapCache_KeysAfterSweep_ReturnsKeys(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Len(t, keys, 9, "Expected keys to have 9 entries")
+	assert.True(t, propositions.SliceContainsAll(keys, []int{6, 7, 8, 9, 10, 11, 12, 13, 14}), "Expected keys to contain all values")
+}
+
+func TestFifoMapCache_KeysAfterDelete_ReturnsKeysInOrder(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 5; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(4)
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Len(t, keys, 4, "Expected keys to have 4 entries")
+	assert.True(t, propositions.SliceContainsAll(keys, []int{0, 1, 2, 3}), "Expected keys to contain all values")
+}
+
+func TestFifoMapCache_Clear_ClearsMap(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	m.Set(1, 1)
+
+	// test
+	m.Clear()
+
+	// assert
+	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.False(t, m.Contains(1), "Expected value to be deleted")
+}
+
+func TestFifoMapCache_ClearAfterSweep_ClearsMap(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+
+	// test
+	m.Clear()
+
+	// assert
+	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.False(t, m.Contains(10), "Expected value to be deleted")
+	assert.False(t, m.Contains(11), "Expected value to be deleted")
+	assert.False(t, m.Contains(12), "Expected value to be deleted")
+	assert.False(t, m.Contains(13), "Expected value to be deleted")
+	assert.False(t, m.Contains(14), "Expected value to be deleted")
+	assert.False(t, m.Contains(5), "Expected value to be deleted")
+	assert.False(t, m.Contains(6), "Expected value to be deleted")
+	assert.False(t, m.Contains(7), "Expected value to be deleted")
+	assert.False(t, m.Contains(8), "Expected value to be deleted")
+	assert.False(t, m.Contains(9), "Expected value to be deleted")
+}
+
+func TestFifoMapCache_ClearAfterDelete_ClearsMap(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 5; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(4)
+
+	// test
+	m.Clear()
+
+	// assert
+	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.False(t, m.Contains(0), "Expected value to be deleted")
+	assert.False(t, m.Contains(1), "Expected value to be deleted")
+	assert.False(t, m.Contains(2), "Expected value to be deleted")
+	assert.False(t, m.Contains(3), "Expected value to be deleted")
+}
+
+func TestFifoMapCache_Values_ReturnsEmptySlice(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Len(t, values, 0, "Expected values to be empty")
+}
+
+func TestFifoMapCache_Values_ReturnsValuesInOrder(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	m.Set(2, 2)
+	m.Set(1, 1)
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Len(t, values, 2, "Expected values to have 2 entries")
+	assert.Equal(t, 2, values[0], "Expected first value to be 2")
+	assert.Equal(t, 1, values[1], "Expected second value to be 1")
+}
+
+func TestFifoMapCache_ValuesAfterSweep_ReturnsValuesInOrder(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.sweep()
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Len(t, values, 9, "Expected values to have 9 entries")
+	assert.True(t, propositions.SliceContainsAll(values, []int{6, 7, 8, 9, 10, 11, 12, 13, 14}), "Expected values to contain all values")
+}
+
+func TestFifoMapCache_ValuesAfterDelete_ReturnsValuesInOrder(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 5; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(4)
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Len(t, values, 4, "Expected values to have 4 entries")
+	assert.Equal(t, 0, values[0], "Expected first value to be 0")
+	assert.Equal(t, 1, values[1], "Expected second value to be 1")
+	assert.Equal(t, 2, values[2], "Expected third value to be 2")
+	assert.Equal(t, 3, values[3], "Expected fourth value to be 3")
 }

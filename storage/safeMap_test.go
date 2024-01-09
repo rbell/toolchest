@@ -162,3 +162,85 @@ func TestSafeMap_Len_NonEmptyMap_ReturnsLength(t *testing.T) {
 	// assert
 	assert.Equal(t, 2, length, "Expected length to be 2")
 }
+
+func TestSafeMap_Keys_EmptyMap_ReturnsEmptySlice(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Lenf(t, keys, 0, "Expected keys to be empty")
+}
+
+func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrder(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(2, "test2")
+	m.Set(1, "test")
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Lenf(t, keys, 2, "Expected keys to have 2 entries")
+	assert.Equal(t, 2, keys[0], "Expected first key to be 2")
+	assert.Equal(t, 1, keys[1], "Expected second key to be 1")
+}
+
+func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrderAfterDelete(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(2, "test2")
+	m.Set(1, "test")
+	m.Delete(2)
+
+	// test
+	keys := m.Keys()
+
+	// assert
+	assert.Lenf(t, keys, 1, "Expected keys to have 1 entry")
+	assert.Equal(t, 1, keys[0], "Expected first key to be 1")
+}
+
+func TestSafeMap_Values_EmptyMap_REturnsEmptuySlice(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Lenf(t, values, 0, "Expected values to be empty")
+}
+
+func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrder(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(2, "test2")
+	m.Set(1, "test")
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Lenf(t, values, 2, "Expected values to have 2 entries")
+	assert.Equal(t, "test2", values[0], "Expected first value to be 'test2'")
+	assert.Equal(t, "test", values[1], "Expected second value to be 'test'")
+}
+
+func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrderAfterDelete(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(2, "test2")
+	m.Set(1, "test")
+	m.Delete(2)
+
+	// test
+	values := m.Values()
+
+	// assert
+	assert.Lenf(t, values, 1, "Expected values to have 1 entry")
+	assert.Equal(t, "test", values[0], "Expected first value to be 'test'")
+}
