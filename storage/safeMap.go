@@ -65,3 +65,25 @@ func (s *SafeMap[K, V]) Len() int {
 	defer s.mux.RUnlock()
 	return len(s.m)
 }
+
+// Keys returns a slice of all the keys in the map
+func (s *SafeMap[K, V]) Keys() []K {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	keys := make([]K, 0, len(s.m))
+	for k := range s.m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Values returns a slice of all the values in the map
+func (s *SafeMap[K, V]) Values() []V {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	values := make([]V, 0, len(s.m))
+	for _, v := range s.m {
+		values = append(values, v)
+	}
+	return values
+}
