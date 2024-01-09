@@ -96,7 +96,7 @@ func (s *stack[T]) Push(x any) {
 	s.entries = append(s.entries, x.(*stackEntry[T]))
 }
 
-// Pop pops and returns the next *stackEnctyr[T] from the stack
+// Pop pops and returns the next *stackEntry[T] from the stack
 func (s *stack[T]) Pop() any {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -104,5 +104,7 @@ func (s *stack[T]) Pop() any {
 	old := s.entries
 	var result *stackEntry[T]
 	result, s.entries = old[len(old)-1], old[:len(old)-1]
-	return result
+	cpy := *result // dereference and return another reference to the value
+	result = nil // nil out the reference to the popped stackEntry in the backing array of the entries to protect memory
+	return &cpy
 }
