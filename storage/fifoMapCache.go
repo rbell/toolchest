@@ -181,6 +181,8 @@ func (f *FifoMapCache[K, V]) sweep() {
 	f.sweepingMux.Lock()
 	defer f.sweepingMux.Unlock()
 
+	f.currentPartitionMux.RLock()
+	defer f.currentPartitionMux.RUnlock()
 	if f.partitions.Len() > f.maxPartitions {
 		numToPop := f.partitions.Len() - f.maxPartitions
 		for i := 0; i < numToPop; i++ {
