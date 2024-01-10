@@ -132,9 +132,13 @@ func (f *FifoMapCache[K, V]) Len() int {
 
 // Clear clears the map
 func (f *FifoMapCache[K, V]) Clear() {
+	f.currentPartitionMux.Lock()
+	defer f.currentPartitionMux.Unlock()
 	f.partitions = NewGenericStack[*SafeMap[K, V]](f.maxPartitions)
 	f.valuePartitionIndex = NewSafeMap[K, uint64](0)
 	f.count.Store(0)
+	newPartition := NewSafeMap[K, V](f.partitionCapacity)
+	f.currentPartitionId = f.partitions.Push(newPartition)
 }
 
 // Keys returns a slice of keys
