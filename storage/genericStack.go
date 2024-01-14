@@ -9,6 +9,7 @@ package storage
 import (
 	"container/heap"
 	"github.com/rbell/toolchest/errors"
+	"sort"
 	"sync"
 	"sync/atomic"
 )
@@ -71,7 +72,13 @@ func (s *GenericStack[T]) Len() int {
 // Values returns a slice of all the values on the stack
 func (s *GenericStack[T]) Values() []T {
 	values := make([]T, 0, s.stack.Len())
-	for _, v := range s.stack.entries {
+	stackCpy := make([]*stackEntry[T], s.stack.Len())
+	// Make copy of entries and sort by id since heap may not be kept in order
+	copy(stackCpy, s.stack.entries)
+	sort.SliceStable(stackCpy, func(i, j int) bool {
+		return stackCpy[i].id < stackCpy[j].id
+	})
+	for _, v := range stackCpy {
 		values = append(values, v.entry)
 	}
 	return values
