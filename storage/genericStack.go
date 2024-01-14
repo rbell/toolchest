@@ -43,7 +43,12 @@ func (s *GenericStack[T]) Push(value T) (id uint64) {
 
 // Pop removes the next T from the stack and returns it
 func (s *GenericStack[T]) Pop() T {
-	return heap.Pop(s.stack).(*stackEntry[T]).entry
+	if s.stack.Len() == 0 {
+		var zero T
+		return zero
+	}
+	entry := heap.Pop(s.stack)
+	return entry.(*stackEntry[T]).entry
 }
 
 // Peek returns the value on the stack that was assigned the id requested.  IDNotFoundError returned if id not found.

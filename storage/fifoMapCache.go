@@ -25,6 +25,7 @@ type FifoMapCache[K comparable, V any] struct {
 	capacity            int
 	count               atomic.Int64
 	sweepingMux         *sync.Mutex
+	config              *fifoMapConfiguration
 }
 
 type numPartitionCalculator func(capacity int) (int, int)
@@ -55,6 +56,7 @@ func NewFifoMapCache[K comparable, V any](ctx context.Context, capacity int, opt
 		valuePartitionIndex: NewSafeMap[K, uint64](0),
 		currentPartitionMux: &sync.RWMutex{},
 		sweepingMux:         &sync.Mutex{},
+		config:              cfg,
 	}
 
 	go func() {
@@ -157,6 +159,35 @@ func (f *FifoMapCache[K, V]) Values() []V {
 		values = append(values, partition.Values()...)
 	}
 	return values
+}
+
+func (f *FifoMapCache[K, V]) Resize(capacity int) {
+	f.config.numPartitionCalculator(capacity)
+	numPartitions, partitionLength := calcBalancedPartitions(capacity)
+	if numPartitions != f.maxPartitions {
+		f.currentPartitionMux.Lock()
+		f.maxPartitions = numPartitions
+		f.partitionCapacity = partitionLength
+		oldPartitions := f.partitions
+		f.partitions = NewGenericStack[*SafeMap[K, V]](numPartitions)
+		f.valuePartitionIndex = NewSafeMap[K, uint64](0)
+		f.count.Store(0)
+		newPartition := NewSafeMap[K, V](f.partitionCapacity)
+		f.currentPartitionId = f.partitions.Push(newPartition)
+		f.currentPartitionMux.Unlock()
+
+		for {
+			partition := oldPartitions.Pop()
+			if partition == nil {
+				break
+			}
+			for _, key := range partition.Keys() {
+				value := partition.Get(key)
+				f.Set(key, value)
+			}
+			f.sweep()
+		}
+	}
 }
 
 // getCurrentPartition returns reference to the currentPartition which new key/values should be added to

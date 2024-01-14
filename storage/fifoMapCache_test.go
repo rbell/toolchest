@@ -149,6 +149,22 @@ func TestFifoMapCache_SetAndSweep_AddsValueToMapAndEvictsRemovesOldest(t *testin
 	assert.True(t, m.Contains(14), "Expected value 10 to be present")
 }
 
+func TestFifoMapCache_SetAndResize_AddsValueToMap(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 25)
+	m.Set(1, 1)
+
+	// test
+	m.Resize(100)
+	m.Set(2, 2)
+
+	// assert
+	assert.Equal(t, int64(2), m.count.Load(), "Expected count to be 2")
+	assert.True(t, m.Contains(1), "Expected value 1 to be present")
+	assert.True(t, m.Contains(2), "Expected value 2 to be present")
+}
+
 func TestFifoMapCache_GetAfterSweptKey_ReturnsZeroValue(t *testing.T) {
 	// setup
 	ctx := context.Background()
@@ -179,6 +195,22 @@ func TestFifoMapCache_GetAfterSweep_ReturnsNonZeroValue(t *testing.T) {
 
 	// assert
 	assert.Equal(t, 12, value, "Expected value to be 12")
+}
+
+func TestFifoMapCache_GetAfterResize_ReturnsNonZeroValue(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 100)
+
+	// test
+	for i := 0; i < 110; i++ {
+		m.Set(i, i)
+	}
+	m.Resize(25) // rsize to 25 keeping last 25 items added
+	value := m.Get(105)
+
+	// assert
+	assert.Equal(t, 105, value, "Expected value to be 105")
 }
 
 func TestFifoMapCache_ContainsAfterSweep_ReturnsFalse(t *testing.T) {
@@ -486,4 +518,21 @@ func TestFifoMapCache_ValuesAfterDelete_ReturnsValuesInOrder(t *testing.T) {
 	assert.Equal(t, 1, values[1], "Expected second value to be 1")
 	assert.Equal(t, 2, values[2], "Expected third value to be 2")
 	assert.Equal(t, 3, values[3], "Expected fourth value to be 3")
+}
+
+func TestFifoMapCache_Resize(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 25)
+
+	// test
+	m.Resize(100)
+
+	// assert
+	assert.Equal(t, 10, m.maxPartitions, "Expected max size to be 100")
+	assert.Equal(t, 10, m.partitionCapacity, "Expected partition capacity to be 10")
+	assert.NotNilf(t, m.partitions, "Expected partitions to be initialized")
+	assert.NotNilf(t, m.valuePartitionIndex, "Expected value partition index to be initialized")
+	assert.NotNilf(t, m.ctx, "Expected context to be initialized")
+	assert.NotNilf(t, m.currentPartitionMux, "Expected current partition mutex to be initialized")
 }
