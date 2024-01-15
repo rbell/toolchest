@@ -56,8 +56,14 @@ jobs:
         with:
           # Configure action using config file (option 1)
           config: ./.testcoverage.yml
+          ## when token is not specified (value '') this feature is turend off
+          ## in this example badge is created and committed only for main brach
+          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
+          ## name of branch where badges are stored
+          ## ideally this should be orphan branch (see below how to create this branch)
+          git-branch: badges
 
-          # Configure action by specifying input parameters individually (option 2).
+      # Configure action by specifying input parameters individually (option 2).
           # If you are using config file you shouldn't use these parameters.
 #          profile: cover.out
 #          local-prefix: github.com/org/project
