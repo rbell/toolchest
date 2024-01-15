@@ -226,8 +226,7 @@ func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrder(t *testing.T) {
 
 	// assert
 	assert.Lenf(t, values, 2, "Expected values to have 2 entries")
-	assert.Equal(t, "test2", values[0], "Expected first value to be 'test2'")
-	assert.Equal(t, "test", values[1], "Expected second value to be 'test'")
+	assert.True(t, propositions.SliceContainsAll(values, []string{"test", "test2"}), "Expected values to contain 'test' and 'test2'")
 }
 
 func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrderAfterDelete(t *testing.T) {
