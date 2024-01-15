@@ -1,6 +1,9 @@
 # Tool Chest
 
 ![coverage](https://raw.githubusercontent.com/rbell/toolchest/badges/.badges/master/coverage.svg)
+![lint](https://github.com/rbell/toolchest/actions/workflows/lint.yml/badge.svg?branch=main)
+![Go Report Card](https://goreportcard.com/badge/github.com/rbell/toolchest?cache=v1)
+![Release](https://img.shields.io/github/release/rbell/toolchest.svg?style=flat-square)
 
 Provides a suite of golang tools that can be referenced and used in golang projects.
 

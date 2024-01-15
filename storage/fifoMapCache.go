@@ -22,7 +22,6 @@ type FifoMapCache[K comparable, V any] struct {
 	ctx                 context.Context
 	partitionCapacity   int
 	maxPartitions       int
-	capacity            int
 	count               atomic.Int64
 	sweepingMux         *sync.Mutex
 	config              *fifoMapConfiguration
