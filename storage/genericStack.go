@@ -22,6 +22,7 @@ type stackEntry[T any] struct {
 type GenericStack[T any] struct {
 	stack      *stack[T]
 	currentKey atomic.Uint64
+	mux        *sync.RWMutex
 }
 
 // NewGenericStack returns an initialized reference to a GenericStack of T
@@ -29,6 +30,7 @@ func NewGenericStack[T any](initialSize int) *GenericStack[T] {
 	return &GenericStack[T]{
 		stack:      newStack[T](initialSize),
 		currentKey: atomic.Uint64{},
+		mux:        &sync.RWMutex{},
 	}
 }
 
@@ -38,6 +40,8 @@ func (s *GenericStack[T]) Push(value T) (id uint64) {
 		id:    s.currentKey.Add(1),
 		entry: value,
 	}
+	s.mux.Lock()
+	defer s.mux.Unlock()
 	heap.Push(s.stack, v)
 	return v.id
 }
@@ -48,12 +52,16 @@ func (s *GenericStack[T]) Pop() T {
 		var zero T
 		return zero
 	}
+	s.mux.Lock()
+	defer s.mux.Unlock()
 	entry := heap.Pop(s.stack)
 	return entry.(*stackEntry[T]).entry
 }
 
 // Peek returns the value on the stack that was assigned the id requested.  IDNotFoundError returned if id not found.
 func (s *GenericStack[T]) Peek(id uint64) (value T, err error) {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
 	for _, v := range s.stack.entries {
 		if v.id == id {
 			value = v.entry
@@ -66,15 +74,19 @@ func (s *GenericStack[T]) Peek(id uint64) (value T, err error) {
 
 // Len returns the number of elements on the stack
 func (s *GenericStack[T]) Len() int {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
 	return s.stack.Len()
 }
 
 // Values returns a slice of all the values on the stack
 func (s *GenericStack[T]) Values() []T {
 	values := make([]T, 0, s.stack.Len())
+	s.mux.RLock()
 	stackCpy := make([]*stackEntry[T], s.stack.Len())
 	// Make copy of entries and sort by id since heap may not be kept in order
 	copy(stackCpy, s.stack.entries)
+	s.mux.RUnlock()
 	sort.SliceStable(stackCpy, func(i, j int) bool {
 		return stackCpy[i].id < stackCpy[j].id
 	})
