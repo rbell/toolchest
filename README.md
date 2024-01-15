@@ -1,5 +1,5 @@
 # Tool Chest
-[![coverage](https://raw.githubusercontent.com/vladopajic/go-test-coverage/badges/.badges/main/coverage.svg)](/.github/.testcoverage.yml)
+[![coverage](https://raw.githubusercontent.com/rbell/toolchest/badges/.badges/main/coverage.svg)](/.github/.testcoverage.yml)
 
 Provides a suite of golang tools that can be referenced and used in golang projects.
 
