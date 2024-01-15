@@ -138,6 +138,7 @@ func (s *stack[T]) Pop() any {
 	var result *stackEntry[T]
 	result, s.entries = old[len(old)-1], old[:len(old)-1]
 	cpy := *result // dereference and return another reference to the value
-	result = nil   // nil out the reference to the popped stackEntry in the backing array of the entries to protect memory
+	//nolint:ineffassign // false positive
+	result = nil // nil out the reference to the popped stackEntry in the backing array of the entries to protect memory
 	return &cpy
 }
