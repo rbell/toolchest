@@ -1,0 +1,27 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Test
+
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Test
+        run: go test -race -v ./...
+
+      - name: Generate Test Coverage
+        run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+
+      - name: Check Test Coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.github/.testcoverage.yml
+          git-token: ${{ github.ref_name == 'master' && secrets.GITHUB_TOKEN || '' }}
+          git-branch: badges
