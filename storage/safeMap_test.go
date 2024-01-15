@@ -215,7 +215,7 @@ func TestSafeMap_Values_EmptyMap_ReturnsEmptuySlice(t *testing.T) {
 	assert.Lenf(t, values, 0, "Expected values to be empty")
 }
 
-func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrder(t *testing.T) {
+func TestSafeMap_Values_NonEmptyMap_ReturnsValues(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
 	m.Set(2, "test2")
