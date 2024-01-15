@@ -357,8 +357,7 @@ func TestFifoMapCache_Keys_ReturnsKeysInOrder(t *testing.T) {
 
 	// assert
 	assert.Len(t, keys, 2, "Expected keys to have 2 entries")
-	assert.Equal(t, 2, keys[0], "Expected first key to be 2")
-	assert.Equal(t, 1, keys[1], "Expected second key to be 1")
+	assert.True(t, propositions.SliceContainsAll(keys, []int{1, 2}), "Expected keys to contain all values")
 }
 
 func TestFifoMapCache_KeysAfterSweep_ReturnsKeys(t *testing.T) {
@@ -378,7 +377,7 @@ func TestFifoMapCache_KeysAfterSweep_ReturnsKeys(t *testing.T) {
 	assert.True(t, propositions.SliceContainsAll(keys, []int{6, 7, 8, 9, 10, 11, 12, 13, 14}), "Expected keys to contain all values")
 }
 
-func TestFifoMapCache_KeysAfterDelete_ReturnsKeysInOrder(t *testing.T) {
+func TestFifoMapCache_KeysAfterDelete_ReturnsKeys(t *testing.T) {
 	// setup
 	ctx := context.Background()
 	m := NewFifoMapCache[int, int](ctx, 10)

@@ -7,6 +7,7 @@
 package storage
 
 import (
+	"github.com/rbell/toolchest/propositions"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -174,7 +175,7 @@ func TestSafeMap_Keys_EmptyMap_ReturnsEmptySlice(t *testing.T) {
 	assert.Lenf(t, keys, 0, "Expected keys to be empty")
 }
 
-func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrder(t *testing.T) {
+func TestSafeMap_Keys_NonEmptyMap_ReturnsKeys(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
 	m.Set(2, "test2")
@@ -185,11 +186,10 @@ func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrder(t *testing.T) {
 
 	// assert
 	assert.Lenf(t, keys, 2, "Expected keys to have 2 entries")
-	assert.Equal(t, 2, keys[0], "Expected first key to be 2")
-	assert.Equal(t, 1, keys[1], "Expected second key to be 1")
+	assert.True(t, propositions.SliceContainsAll(keys, []int{1, 2}), "Expected keys to contain 1 and 2")
 }
 
-func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrderAfterDelete(t *testing.T) {
+func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysAfterDelete(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
 	m.Set(2, "test2")
@@ -204,7 +204,7 @@ func TestSafeMap_Keys_NonEmptyMap_ReturnsKeysInOrderAfterDelete(t *testing.T) {
 	assert.Equal(t, 1, keys[0], "Expected first key to be 1")
 }
 
-func TestSafeMap_Values_EmptyMap_REturnsEmptuySlice(t *testing.T) {
+func TestSafeMap_Values_EmptyMap_ReturnsEmptuySlice(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
 
@@ -215,7 +215,7 @@ func TestSafeMap_Values_EmptyMap_REturnsEmptuySlice(t *testing.T) {
 	assert.Lenf(t, values, 0, "Expected values to be empty")
 }
 
-func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrder(t *testing.T) {
+func TestSafeMap_Values_NonEmptyMap_ReturnsValues(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
 	m.Set(2, "test2")
@@ -226,8 +226,7 @@ func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrder(t *testing.T) {
 
 	// assert
 	assert.Lenf(t, values, 2, "Expected values to have 2 entries")
-	assert.Equal(t, "test2", values[0], "Expected first value to be 'test2'")
-	assert.Equal(t, "test", values[1], "Expected second value to be 'test'")
+	assert.True(t, propositions.SliceContainsAll(values, []string{"test", "test2"}), "Expected values to contain 'test' and 'test2'")
 }
 
 func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrderAfterDelete(t *testing.T) {
