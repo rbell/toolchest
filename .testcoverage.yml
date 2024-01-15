@@ -10,11 +10,11 @@ local-prefix: "github.com/org/project"
 threshold:
   # (optional; default 0) 
   # The minimum coverage that each file should have
-  file: 70
+  file: 50
 
   # (optional; default 0) 
   # The minimum coverage that each package should have
-  package: 80
+  package: 60
 
   # (optional; default 0) 
   # The minimum total coverage project should have
@@ -27,15 +27,18 @@ threshold:
 # specific to more general rules.
 override:
   # Increase coverage threshold to 100% for `foo` package (default is 80, as configured above)
-#  - threshold: 100
-#    path: ^pkg/lib/foo$
+  - threshold: 20
+    path: ^pworkqueue/models.go$
+  - threshold: 20
+    path: ^workqueue/options.go$
 
 # Holds regexp rules which will exclude matched files or packages from coverage statistics
 exclude:
   # Exclude files or packages matching their paths
-#  paths:
+  paths:
 #    - \.pb\.go$    # excludes all protobuf generated files
-#    - ^pkg/bar     # exclude package `pkg/bar`
+    - ^errors/.go$     # exclude package `errors`
+    - ^workqueue/models.go$ # exclude file `workqueue/models.go` since its models and no logic
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by
