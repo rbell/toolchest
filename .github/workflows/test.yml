@@ -16,7 +16,20 @@ jobs:
       - name: Test
         run: go test -race -v ./...
 
-      - name: Generate Test Coverage
+      - name: Test Coverage Report
+        uses: ncruces/go-coverage-report@v0
+        with:
+          report: true
+          chart: true
+          amend: true
+        if: |
+          matrix.os == 'ubuntu-latest' &&
+          github.event_name == 'push' &&
+          github.ref_name == 'master'
+        continue-on-error: true
+
+
+      - name: Generate Test Coverage Badge
         run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
 
       - name: Check Test Coverage
