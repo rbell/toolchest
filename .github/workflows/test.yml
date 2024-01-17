@@ -23,9 +23,7 @@ jobs:
           chart: true
           amend: true
         if: |
-          matrix.os == 'ubuntu-latest' &&
-          github.event_name == 'push' &&
-          github.ref_name == 'master'
+          github.REF_NAME == 'master'
         continue-on-error: true
 
 
