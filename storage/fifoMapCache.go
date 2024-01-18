@@ -114,6 +114,7 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 				f.count.Add(-1)
 			}
 			partition.Set(key, value)
+			f.count.Add(1)
 			return
 		}
 	}
