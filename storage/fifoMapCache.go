@@ -110,8 +110,10 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 	if partitionId = f.valuePartitionIndex.Get(key); partitionId > 0 {
 		partition, _ := f.partitions.Peek(partitionId)
 		if partition != nil {
+			if reflect.ValueOf(partition.Get(key)).IsZero() {
+				f.count.Add(-1)
+			}
 			partition.Set(key, value)
-			f.count.Add(1)
 			return
 		}
 	}
