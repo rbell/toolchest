@@ -531,3 +531,15 @@ func TestFifoMapCache_Resize(t *testing.T) {
 	assert.NotNilf(t, m.ctx, "Expected context to be initialized")
 	assert.NotNilf(t, m.currentPartitionMux, "Expected current partition mutex to be initialized")
 }
+
+func TestFifoMapCache_Capacity(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 25)
+
+	// test
+	capacity := m.Capacity()
+
+	// assert
+	assert.Equal(t, 25, capacity, "Expected capacity to be 25")
+}
