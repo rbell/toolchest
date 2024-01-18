@@ -81,6 +81,7 @@ func (s *SafeMap[K, V]) Keys() []K {
 func (s *SafeMap[K, V]) Values() []V {
 	s.mux.RLock()
 	defer s.mux.RUnlock()
+
 	values := make([]V, 0, len(s.m))
 	for _, v := range s.m {
 		values = append(values, v)

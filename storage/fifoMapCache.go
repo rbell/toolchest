@@ -9,6 +9,7 @@ package storage
 import (
 	"context"
 	"math"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -64,7 +65,7 @@ func NewFifoMapCache[K comparable, V any](ctx context.Context, capacity int, opt
 		for {
 			select {
 			case <-ticker.C:
-				cache.sweep()
+				cache.Sweep()
 			case <-cache.ctx.Done():
 				return
 			}
@@ -73,6 +74,11 @@ func NewFifoMapCache[K comparable, V any](ctx context.Context, capacity int, opt
 	}()
 
 	return cache
+}
+
+// Capacity returns the actual capacity of the map once the number of partitions and the partition capacity are calculated
+func (f *FifoMapCache[K, V]) Capacity() int {
+	return f.maxPartitions * f.partitionCapacity
 }
 
 // Contains returns true if the key of type K is in the map
@@ -104,6 +110,9 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 	if partitionId = f.valuePartitionIndex.Get(key); partitionId > 0 {
 		partition, _ := f.partitions.Peek(partitionId)
 		if partition != nil {
+			if reflect.ValueOf(partition.Get(key)).IsZero() {
+				f.count.Add(-1)
+			}
 			partition.Set(key, value)
 			return
 		}
@@ -120,7 +129,6 @@ func (f *FifoMapCache[K, V]) Delete(key K) {
 		partition, _ := f.partitions.Peek(partitionId)
 		if partition != nil {
 			partition.Delete(key)
-			f.valuePartitionIndex.Delete(key)
 			f.count.Add(-1)
 		}
 	}
@@ -184,7 +192,7 @@ func (f *FifoMapCache[K, V]) Resize(capacity int) {
 				value := partition.Get(key)
 				f.Set(key, value)
 			}
-			f.sweep()
+			f.Sweep()
 		}
 	}
 }
@@ -201,12 +209,12 @@ func (f *FifoMapCache[K, V]) getCurrentPartition() (*SafeMap[K, V], uint64) {
 	defer f.currentPartitionMux.Unlock()
 	newPartition := NewSafeMap[K, V](f.partitionCapacity)
 	f.currentPartitionId = f.partitions.Push(newPartition)
-	go f.sweep()
+	go f.Sweep()
 	return newPartition, f.currentPartitionId
 }
 
 // sweep removes partitions from the stack if the number of partitions exceeds the maxPartitions
-func (f *FifoMapCache[K, V]) sweep() {
+func (f *FifoMapCache[K, V]) Sweep() {
 	// restrict to single sweep at a time
 	f.sweepingMux.Lock()
 	defer f.sweepingMux.Unlock()
@@ -217,7 +225,11 @@ func (f *FifoMapCache[K, V]) sweep() {
 		numToPop := f.partitions.Len() - f.maxPartitions
 		for i := 0; i < numToPop; i++ {
 			popped := f.partitions.Pop()
-			f.count.Add(-1 * int64(popped.Len()))
+			for _, v := range popped.Values() {
+				if !reflect.ValueOf(v).IsZero() {
+					f.count.Add(-1)
+				}
+			}
 		}
 	}
 }
@@ -250,6 +262,12 @@ func WithBalancedPartitions(nRoot float64, minimumPartitions int) fifoInitializa
 			partitionLenth := int(math.Floor(float64(capacity) / float64(numPartitions)))
 			return numPartitions, partitionLenth
 		}
+	}
+}
+
+func WithSweepFrequency(frequency time.Duration) fifoInitializationOption {
+	return func(configuration *fifoMapConfiguration) {
+		configuration.sweepFrequency = frequency
 	}
 }
 
