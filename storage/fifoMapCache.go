@@ -161,7 +161,7 @@ func (f *FifoMapCache[K, V]) Keys() []K {
 
 // Values returns a slice of values
 func (f *FifoMapCache[K, V]) Values() []V {
-	values := make([]V, 0, f.Len())
+	values := []V{}
 	for _, partition := range f.partitions.Values() {
 		values = append(values, partition.Values()...)
 	}
