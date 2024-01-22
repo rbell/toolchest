@@ -3,6 +3,7 @@ module github.com/rbell/toolchest
 go 1.21
 
 require (
+	github.com/google/btree v1.1.2
 	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.8.2
 )
