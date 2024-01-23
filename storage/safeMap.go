@@ -59,6 +59,14 @@ func (s *SafeMap[K, V]) Delete(key K) {
 	delete(s.m, key)
 }
 
+// Has returns true if the key of type K is in the map
+func (s *SafeMap[K, V]) Has(key K) bool {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	_, ok := s.m[key]
+	return ok
+}
+
 // Len returns the length of the map
 func (s *SafeMap[K, V]) Len() int {
 	s.mux.RLock()

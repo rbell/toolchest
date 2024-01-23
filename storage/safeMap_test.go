@@ -243,3 +243,27 @@ func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrderAfterDelete(t *testing.T
 	assert.Lenf(t, values, 1, "Expected values to have 1 entry")
 	assert.Equal(t, "test", values[0], "Expected first value to be 'test'")
 }
+
+
+func TestSafeMap_Has_ReturnsTrue(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(1, "test")
+
+	// test
+	has := m.Has(1)
+
+	// assert
+	assert.True(t, has, "Expected has to be true")
+}
+
+func TestSafeMap_Has_ReturnsFalse(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+
+	// test
+	has := m.Has(1)
+
+	// assert
+	assert.False(t, has, "Expected has to be false")
+}

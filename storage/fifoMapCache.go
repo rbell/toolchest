@@ -127,7 +127,7 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 func (f *FifoMapCache[K, V]) Delete(key K) {
 	if partitionId := f.valuePartitionIndex.Get(key); partitionId > 0 {
 		partition, _ := f.partitions.Peek(partitionId)
-		if partition != nil {
+		if partition != nil && partition.Has(key) {
 			partition.Delete(key)
 			f.count.Add(-1)
 		}
