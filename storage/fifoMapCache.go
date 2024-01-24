@@ -9,9 +9,7 @@ package storage
 import (
 	"context"
 	"math"
-	"reflect"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -23,7 +21,6 @@ type FifoMapCache[K comparable, V any] struct {
 	ctx                 context.Context
 	partitionCapacity   int
 	maxPartitions       int
-	count               atomic.Int64
 	sweepingMux         *sync.Mutex
 	config              *fifoMapConfiguration
 }
@@ -110,9 +107,6 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 	if partitionId = f.valuePartitionIndex.Get(key); partitionId > 0 {
 		partition, _ := f.partitions.Peek(partitionId)
 		if partition != nil {
-			if reflect.ValueOf(partition.Get(key)).IsZero() {
-				f.count.Add(-1)
-			}
 			partition.Set(key, value)
 			return
 		}
@@ -120,7 +114,6 @@ func (f *FifoMapCache[K, V]) Set(key K, value V) {
 
 	partition, partitionId := f.getCurrentPartition()
 	partition.Set(key, value)
-	f.count.Add(1)
 	f.valuePartitionIndex.Set(key, partitionId)
 }
 
@@ -129,14 +122,13 @@ func (f *FifoMapCache[K, V]) Delete(key K) {
 		partition, _ := f.partitions.Peek(partitionId)
 		if partition != nil && partition.Has(key) {
 			partition.Delete(key)
-			f.count.Add(-1)
 		}
 	}
 }
 
 // Len returns the length of the map
 func (f *FifoMapCache[K, V]) Len() int {
-	return int(f.count.Load())
+	return len(f.Keys())
 }
 
 // Clear clears the map
@@ -145,14 +137,13 @@ func (f *FifoMapCache[K, V]) Clear() {
 	defer f.currentPartitionMux.Unlock()
 	f.partitions = NewGenericStack[*SafeMap[K, V]](f.maxPartitions)
 	f.valuePartitionIndex = NewSafeMap[K, uint64](0)
-	f.count.Store(0)
 	newPartition := NewSafeMap[K, V](f.partitionCapacity)
 	f.currentPartitionId = f.partitions.Push(newPartition)
 }
 
 // Keys returns a slice of keys
 func (f *FifoMapCache[K, V]) Keys() []K {
-	keys := make([]K, 0, f.Len())
+	keys := make([]K, 0, f.partitionCapacity*f.partitions.Len())
 	for _, partition := range f.partitions.Values() {
 		keys = append(keys, partition.Keys()...)
 	}
@@ -161,7 +152,7 @@ func (f *FifoMapCache[K, V]) Keys() []K {
 
 // Values returns a slice of values
 func (f *FifoMapCache[K, V]) Values() []V {
-	values := []V{}
+	values := make([]V, 0, f.partitionCapacity*f.partitions.Len())
 	for _, partition := range f.partitions.Values() {
 		values = append(values, partition.Values()...)
 	}
@@ -178,7 +169,6 @@ func (f *FifoMapCache[K, V]) Resize(capacity int) {
 		oldPartitions := f.partitions
 		f.partitions = NewGenericStack[*SafeMap[K, V]](numPartitions)
 		f.valuePartitionIndex = NewSafeMap[K, uint64](0)
-		f.count.Store(0)
 		newPartition := NewSafeMap[K, V](f.partitionCapacity)
 		f.currentPartitionId = f.partitions.Push(newPartition)
 		f.currentPartitionMux.Unlock()
@@ -224,12 +214,7 @@ func (f *FifoMapCache[K, V]) Sweep() {
 	if f.partitions.Len() > f.maxPartitions {
 		numToPop := f.partitions.Len() - f.maxPartitions
 		for i := 0; i < numToPop; i++ {
-			popped := f.partitions.Pop()
-			for _, v := range popped.Values() {
-				if !reflect.ValueOf(v).IsZero() {
-					f.count.Add(-1)
-				}
-			}
+			f.partitions.Pop()
 		}
 	}
 }

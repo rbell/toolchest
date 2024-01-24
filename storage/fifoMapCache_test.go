@@ -11,6 +11,7 @@ import (
 	"github.com/rbell/toolchest/propositions"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestNewFifoMapCache_ReturnsBalancedFifoMapCache(t *testing.T) {
@@ -19,6 +20,23 @@ func TestNewFifoMapCache_ReturnsBalancedFifoMapCache(t *testing.T) {
 
 	// test
 	m := NewFifoMapCache[int, int](ctx, 100)
+
+	// assert
+	assert.NotNil(t, m, "Expected map to be initialized")
+	assert.Equalf(t, 10, m.maxPartitions, "Expected max size to be 10")
+	assert.Equalf(t, 10, m.partitionCapacity, "Expected partition capacity to be 10")
+	assert.NotNilf(t, m.partitions, "Expected partitions to be initialized")
+	assert.NotNilf(t, m.valuePartitionIndex, "Expected value partition index to be initialized")
+	assert.NotNilf(t, m.ctx, "Expected context to be initialized")
+	assert.NotNilf(t, m.currentPartitionMux, "Expected current partition mutex to be initialized")
+}
+
+func TestNewFifoMapCache_WithSweepFrequency_ReturnsBalancedFifoMapCacheWithSweepFrequency(t *testing.T) {
+	// setup
+	ctx := context.Background()
+
+	// test
+	m := NewFifoMapCache[int, int](ctx, 100, WithSweepFrequency(time.Second*10))
 
 	// assert
 	assert.NotNil(t, m, "Expected map to be initialized")
@@ -74,7 +92,7 @@ func TestFifoMapCache_Set_AddsValueToMap(t *testing.T) {
 
 	// assert
 	currPartition, _ := m.partitions.Peek(m.currentPartitionId)
-	assert.Equal(t, int64(1), m.count.Load(), "Expected count to be 1")
+	assert.Equal(t, 1, m.Len(), "Expected count to be 1")
 	assert.Equal(t, 1, currPartition.Get(1), "Expected value to be 1")
 }
 
@@ -89,7 +107,7 @@ func TestFifoMapCache_Set_UpdatesExistingEntryInMap(t *testing.T) {
 
 	// assert
 	currPartition, _ := m.partitions.Peek(m.currentPartitionId)
-	assert.Equal(t, int64(1), m.count.Load(), "Expected count to be 1")
+	assert.Equal(t, 1, m.Len(), "Expected count to be 1")
 	assert.Equal(t, 2, currPartition.Get(1), "Expected value to be 2")
 }
 
@@ -131,7 +149,7 @@ func TestFifoMapCache_SetAndSweep_AddsValueToMapAndEvictsRemovesOldest(t *testin
 	m.Sweep()
 
 	// assert
-	assert.Equal(t, int64(10), m.count.Load(), "Expected count to be 9")
+	assert.Equal(t, 9, m.Len(), "Expected count to be 9")
 	assert.False(t, m.Contains(0), "Expected value 0 to be removed")
 	assert.False(t, m.Contains(1), "Expected value 1 to be removed")
 	assert.False(t, m.Contains(2), "Expected value 2 to be removed")
@@ -160,7 +178,7 @@ func TestFifoMapCache_SetAndResize_AddsValueToMap(t *testing.T) {
 	m.Set(2, 2)
 
 	// assert
-	assert.Equal(t, int64(2), m.count.Load(), "Expected count to be 2")
+	assert.Equal(t, 2, m.Len(), "Expected count to be 2")
 	assert.True(t, m.Contains(1), "Expected value 1 to be present")
 	assert.True(t, m.Contains(2), "Expected value 2 to be present")
 }
@@ -239,7 +257,7 @@ func TestFifoMapCache_Delete_Deletes(t *testing.T) {
 	m.Delete(1)
 
 	// assert
-	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.Equal(t, 0, m.Len(), "Expected count to be 0")
 	assert.False(t, m.Contains(1), "Expected value to be deleted")
 }
 
@@ -256,7 +274,7 @@ func TestFifoMapCache_DeleteAfterSweep_Deletes(t *testing.T) {
 	m.Delete(12)
 
 	// assert
-	assert.Equal(t, int64(9), m.count.Load(), "Expected count to be 8")
+	assert.Equal(t, 8, m.Len(), "Expected count to be 8")
 	assert.False(t, m.Contains(12), "Expected value to be deleted")
 }
 
@@ -314,7 +332,24 @@ func TestFifoMapCache_LenAfterSweep_ReturnsNonZero(t *testing.T) {
 	length := m.Len()
 
 	// assert
-	assert.Equal(t, 10, length, "Expected length to be 9")
+	assert.Equal(t, 9, length, "Expected length to be 10")
+}
+
+func TestFifoMapCache_LenAfterDeleteAndSweep_ReturnsNonZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 15; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(1)
+	m.Sweep()
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 9, length, "Expected length to be 10")
 }
 
 func TestFifoMapCache_LenAfterDelete_ReturnsNonZero(t *testing.T) {
@@ -331,6 +366,22 @@ func TestFifoMapCache_LenAfterDelete_ReturnsNonZero(t *testing.T) {
 
 	// assert
 	assert.Equal(t, 4, length, "Expected length to be 4")
+}
+
+func TestFifoMapCache_LenAfterDeleteNonExistingKey_ReturnsNonZero(t *testing.T) {
+	// setup
+	ctx := context.Background()
+	m := NewFifoMapCache[int, int](ctx, 10)
+	for i := 0; i < 5; i++ {
+		m.Set(i, i)
+	}
+	m.Delete(9)
+
+	// test
+	length := m.Len()
+
+	// assert
+	assert.Equal(t, 5, length, "Expected length to be 5")
 }
 
 func TestFifoMapCache_Keys_ReturnsEmptySlice(t *testing.T) {
@@ -404,7 +455,7 @@ func TestFifoMapCache_Clear_ClearsMap(t *testing.T) {
 	m.Clear()
 
 	// assert
-	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.Equal(t, 0, m.Len(), "Expected count to be 0")
 	assert.False(t, m.Contains(1), "Expected value to be deleted")
 }
 
@@ -421,7 +472,7 @@ func TestFifoMapCache_ClearAfterSweep_ClearsMap(t *testing.T) {
 	m.Clear()
 
 	// assert
-	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.Equal(t, 0, m.Len(), "Expected count to be 0")
 	assert.False(t, m.Contains(10), "Expected value to be deleted")
 	assert.False(t, m.Contains(11), "Expected value to be deleted")
 	assert.False(t, m.Contains(12), "Expected value to be deleted")
@@ -447,7 +498,7 @@ func TestFifoMapCache_ClearAfterDelete_ClearsMap(t *testing.T) {
 	m.Clear()
 
 	// assert
-	assert.Equal(t, int64(0), m.count.Load(), "Expected count to be 0")
+	assert.Equal(t, 0, m.Len(), "Expected count to be 0")
 	assert.False(t, m.Contains(0), "Expected value to be deleted")
 	assert.False(t, m.Contains(1), "Expected value to be deleted")
 	assert.False(t, m.Contains(2), "Expected value to be deleted")
