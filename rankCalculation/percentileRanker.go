@@ -12,26 +12,40 @@ func NewPercentileRanker[T comparable](positionalRank bool) *PercentileRanker[T]
 	return &PercentileRanker[T]{positionalRanking: positionalRank}
 }
 
-func (r *PercentileRanker[T]) Rank(entries map[T]uint64) map[T]float64 {
+func (r *PercentileRanker[T]) Rank(entries map[T]int64) (map[T]float64, error) {
 	percentiles := make(map[T]float64)
-	total := uint64(0)
-	for _, v := range entries {
-		total += v
+	if len(entries) == 0 {
+		return percentiles, nil
 	}
+
 	// sort entries ascending
 	sortedKeys := MapOps.SortAscKeys(entries)
 
 	if r.positionalRanking {
 		// calculate the percentile for each entry based on position
 		for i, k := range sortedKeys {
-			percentiles[k] = float64(i) / float64(len(sortedKeys)) * 100
+			if i == 0 {
+				percentiles[k] = 0
+				continue
+			}
+			if i == len(sortedKeys)-1 {
+				percentiles[k] = 100
+				continue
+			}
+			percentiles[k] = float64(i+1) / float64(len(sortedKeys)+1) * 100
 		}
-		return percentiles
+		return percentiles, nil
 	}
 
 	// calculate the percentile for the value of each entry
-	for _, k := range sortedKeys {
-		percentiles[k] = float64(entries[k]) / float64(total) * 100
+	maxV := int64(0)
+	for _, v := range entries {
+		if v > maxV {
+			maxV = v
+		}
 	}
-	return percentiles
+	for _, k := range sortedKeys {
+		percentiles[k] = float64(entries[k]) / float64(maxV) * 100
+	}
+	return percentiles, nil
 }
