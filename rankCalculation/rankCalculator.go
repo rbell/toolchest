@@ -28,7 +28,7 @@ func NewRankCalculator[T comparable](options ...RankCalculatorOption[T]) *RankCa
 	}
 }
 
-// Accumulate adds the value of type T to the rank calculator
+// Accumulate adds the value of type T to the rank calculator if it does not already exist, and increments the count
 func (r *RankCalculator[T]) Accumulate(entry T) {
 	r.entries.GetOrAdd(entry, &atomic.Int64{}).Add(1)
 }
