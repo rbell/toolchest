@@ -45,6 +45,20 @@ func (s *SafeMap[K, V]) Get(key K) (value V) {
 	return
 }
 
+// GetOrAdd returns the value of type V for the key of type K.  If the key is not found, the value is added to the map and returned.
+func (s *SafeMap[K, V]) GetOrAdd(key K, val V) (value V) {
+	if s.Has(key) {
+		return s.Get(key)
+	}
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if v, ok := s.m[key]; ok {
+		return v
+	}
+	s.m[key] = val
+	return val
+}
+
 // Set sets the value of type V for the key of type K.
 func (s *SafeMap[K, V]) Set(key K, value V) {
 	s.mux.Lock()
@@ -95,4 +109,26 @@ func (s *SafeMap[K, V]) Values() []V {
 		values = append(values, v)
 	}
 	return values
+}
+
+// CopyToMap returns a copy of the map
+func (s *SafeMap[K, V]) CopyToMap() map[K]V {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	result := make(map[K]V, len(s.m))
+	for k, v := range s.m {
+		result[k] = v
+	}
+	return result
+}
+
+// TranslateToMapOf returns a map of type D from the map of type V
+func TranslateToMapOf[K comparable, V any, D any](s *SafeMap[K, V], translator func(V) D) map[K]D {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+	result := make(map[K]D, len(s.m))
+	for k, v := range s.m {
+		result[k] = translator(v)
+	}
+	return result
 }
