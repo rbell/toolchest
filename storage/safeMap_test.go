@@ -244,7 +244,6 @@ func TestSafeMap_Values_NonEmptyMap_ReturnsValuesInOrderAfterDelete(t *testing.T
 	assert.Equal(t, "test", values[0], "Expected first value to be 'test'")
 }
 
-
 func TestSafeMap_Has_ReturnsTrue(t *testing.T) {
 	// setup
 	m := NewSafeMap[int, string](0)
@@ -266,4 +265,50 @@ func TestSafeMap_Has_ReturnsFalse(t *testing.T) {
 
 	// assert
 	assert.False(t, has, "Expected has to be false")
+}
+
+func TestSafeMap_Clear_EmptyMap_DoesNothing(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+
+	// test
+	m.Clear()
+
+	// assert
+	assert.Lenf(t, m.m, 0, "Expected map to be empty")
+}
+
+func TestSafeMap_Clear_NonEmptyMap_ClearsMap(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(1, "test")
+
+	// test
+	m.Clear()
+
+	// assert
+	assert.Lenf(t, m.m, 0, "Expected map to be empty")
+}
+
+func TestSafeMap_ClearAndResize_EmptyMap_DoesNothing(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+
+	// test
+	m.ClearAndResize(10)
+
+	// assert
+	assert.Lenf(t, m.m, 0, "Expected map to be empty")
+}
+
+func TestSafeMap_ClearAndResize_NonEmptyMap_ClearsMapAndResizes(t *testing.T) {
+	// setup
+	m := NewSafeMap[int, string](0)
+	m.Set(1, "test")
+
+	// test
+	m.ClearAndResize(10)
+
+	// assert
+	assert.Lenf(t, m.m, 0, "Expected map to be empty")
 }

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023  by Randy Bell.  All rights reserved.
+ *
+ * This Source Code Form is subject to the terms of the Apache Public License, version 2.0. If a copy of the APL was not distributed with this file, you can obtain one at https://www.apache.org/licenses/LICENSE-2.0.txt.
+ */
+
 package rankCalculation
 
 import (
@@ -43,6 +49,7 @@ func (r *RankCalculator[T]) Reset() {
 // Calculate returns the ranking of the entries
 func (r *RankCalculator[T]) Calculate() (map[T]float64, error) {
 	r.mux.RLock()
+	defer r.mux.RUnlock()
 	entryCpy := storage.TranslateToMapOf[T, *atomic.Int64, int64](r.entries, func(v *atomic.Int64) int64 {
 		return v.Load()
 	})

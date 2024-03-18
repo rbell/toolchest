@@ -73,6 +73,20 @@ func (s *SafeMap[K, V]) Delete(key K) {
 	delete(s.m, key)
 }
 
+// Clear removes all the keys and values from the map
+func (s *SafeMap[K, V]) Clear() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	s.m = make(map[K]V)
+}
+
+// ClearAndResize clears the map and resize it to the new size
+func (s *SafeMap[K, V]) ClearAndResize(newSize int) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	s.m = make(map[K]V, newSize)
+}
+
 // Has returns true if the key of type K is in the map
 func (s *SafeMap[K, V]) Has(key K) bool {
 	s.mux.RLock()
