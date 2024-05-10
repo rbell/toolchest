@@ -7,16 +7,16 @@
 package serverConfig
 
 type Config struct {
-	httpServiceConfig *HttpServerConfig
-	grpcServerConfig  *GrpcServerConfig
+	httpServerConfig *HttpServerConfig
+	grpcServerConfig *GrpcServerConfig
 }
 
 func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) GetHttpServiceConfig() *HttpServerConfig {
-	return c.httpServiceConfig
+func (c *Config) GetHttpServerConfig() *HttpServerConfig {
+	return c.httpServerConfig
 }
 
 func (c *Config) GetGrpcServerConfig() *GrpcServerConfig {

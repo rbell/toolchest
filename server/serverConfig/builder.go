@@ -15,12 +15,12 @@ func BuildServerConfig() *ServerConfigBuilder {
 }
 
 func (b *ServerConfigBuilder) WithHttpServiceConfig(httpBuilder *HttpServerConfigBuilder) *ServerConfigBuilder {
-	b.cfg.HttpServiceConfig = httpBuilder.build()
+	b.cfg.httpServerConfig = httpBuilder.build()
 	return b
 }
 
 func (b *ServerConfigBuilder) WithGrpcServiceConfig(grpcBuilder *GrpcServerConfigBuilder) *ServerConfigBuilder {
-	b.cfg.GrpcServiceConfig = grpcBuilder.build()
+	b.cfg.grpcServerConfig = grpcBuilder.build()
 	return b
 }
 

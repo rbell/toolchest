@@ -10,8 +10,11 @@ import (
 	"context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rbell/toolchest/server"
+	"github.com/rbell/toolchest/server/example/grpcServer"
+	"github.com/rbell/toolchest/server/example/proto"
 	"github.com/rbell/toolchest/server/serverConfig"
 	"github.com/richardwilkes/toolbox/atexit"
+	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"sync"
@@ -25,6 +28,13 @@ func main() {
 				WithPort("8080").
 				AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 					w.Write([]byte("Hello, World!"))
+				})).
+		WithGrpcServiceConfig(
+			serverConfig.BuildGrpcServerConfig().
+				WithPort("8888").
+				AddInitializer(func(server *grpc.Server) {
+					proto.RegisterHelloServiceServer(server, &grpcServer.HelloService{})
+					log.Println("Grpc server initializer")
 				})).
 		Build()
 

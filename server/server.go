@@ -35,7 +35,7 @@ func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *syn
 
 	providers := []ServiceProvider{}
 
-	if httpCfg := cfg.GetHttpServiceConfig(); httpCfg != nil {
+	if httpCfg := cfg.GetHttpServerConfig(); httpCfg != nil {
 		providers = append(providers, httpServer.NewHttpProvider(httpCfg))
 	}
 
