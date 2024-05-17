@@ -11,9 +11,11 @@ import "google.golang.org/grpc"
 type GrpcServerInitializer func(server *grpc.Server)
 
 type GrpcServerConfig struct {
-	Port         string
-	opts         []grpc.ServerOption
-	initializers []GrpcServerInitializer
+	Port             string
+	opts             []grpc.ServerOption
+	registrations    map[*grpc.ServiceDesc]any
+	initializers     []GrpcServerInitializer
+	enableReflection bool
 }
 
 func (c *GrpcServerConfig) AddOption(opt grpc.ServerOption) {
@@ -30,4 +32,20 @@ func (c *GrpcServerConfig) AddInitializer(init GrpcServerInitializer) {
 
 func (c *GrpcServerConfig) GetInitializers() []GrpcServerInitializer {
 	return c.initializers
+}
+
+func (c *GrpcServerConfig) RegisterImplementation(description *grpc.ServiceDesc, impl any) {
+	c.registrations[description] = impl
+}
+
+func (c *GrpcServerConfig) GetRegistrations() map[*grpc.ServiceDesc]any {
+	return c.registrations
+}
+
+func (c *GrpcServerConfig) EnableReflection() {
+	c.enableReflection = true
+}
+
+func (c *GrpcServerConfig) IsReflectionEnabled() bool {
+	return c.enableReflection
 }

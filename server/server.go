@@ -8,6 +8,7 @@ package server
 
 import (
 	"context"
+	"github.com/rbell/toolchest/server/grpcServer"
 	"github.com/rbell/toolchest/server/httpServer"
 	"github.com/rbell/toolchest/server/serverConfig"
 	"sync"
@@ -37,6 +38,10 @@ func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *syn
 
 	if httpCfg := cfg.GetHttpServerConfig(); httpCfg != nil {
 		providers = append(providers, httpServer.NewHttpProvider(httpCfg))
+	}
+
+	if grpcCfg := cfg.GetGrpcServerConfig(); grpcCfg != nil {
+		providers = append(providers, grpcServer.NewGrpcProvider(grpcCfg))
 	}
 
 	return &Server{

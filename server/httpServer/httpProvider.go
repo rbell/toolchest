@@ -42,6 +42,7 @@ func (p *HttpProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	defer stopWg.Done()
 
 	startWg.Done()
+	fmt.Println("HTTP Server started on port: ", p.httpSrver.Addr)
 	err := p.httpSrver.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)

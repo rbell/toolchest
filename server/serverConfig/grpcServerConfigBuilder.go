@@ -26,6 +26,11 @@ func (b *GrpcServerConfigBuilder) AddOption(opt grpc.ServerOption) *GrpcServerCo
 	return b
 }
 
+func (b *GrpcServerConfigBuilder) RegisterImplementation(description *grpc.ServiceDesc, impl any) *GrpcServerConfigBuilder {
+	b.cfg.RegisterImplementation(description, impl)
+	return b
+}
+
 func (b *GrpcServerConfigBuilder) AddInitializer(init GrpcServerInitializer) *GrpcServerConfigBuilder {
 	b.cfg.AddInitializer(init)
 	return b
@@ -33,4 +38,9 @@ func (b *GrpcServerConfigBuilder) AddInitializer(init GrpcServerInitializer) *Gr
 
 func (b *GrpcServerConfigBuilder) build() *GrpcServerConfig {
 	return b.cfg
+}
+
+func (b *GrpcServerConfigBuilder) EnableReflection() *GrpcServerConfigBuilder {
+	b.cfg.EnableReflection()
+	return b
 }
