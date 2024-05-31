@@ -26,6 +26,7 @@ func main() {
 			serverConfig.BuildHttpServiceConfig().
 				WithPort("8080").
 				AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+					//nolint:errcheck // ignore lint error for example
 					w.Write([]byte("Hello, World!"))
 				})).
 		WithGrpcServiceConfig(
@@ -47,12 +48,17 @@ func main() {
 	atexit.Register(func() {
 		// context with timeout for server to stop
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*30)
+		//nolint:errcheck // ignore lint error for example
 		defer stopCancel()
+		//nolint:errcheck // ignore errorlint error for example
 		srvr.Stop(stopCtx)
 	})
 
 	// start the server
-	srvr.Start()
+	err = srvr.Start()
+	if err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 
 	// wait for server to stop
 	wg.Wait()

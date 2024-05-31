@@ -57,7 +57,7 @@ func (p *GrpcProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	}
 }
 
-func (p *GrpcProvider) Stop(ctx context.Context) {
+func (p *GrpcProvider) Stop(ctx context.Context) error {
 	stoppedCh := make(chan struct{})
 	go func() {
 		select {
@@ -68,4 +68,5 @@ func (p *GrpcProvider) Stop(ctx context.Context) {
 	}()
 	p.grpcServer.GracefulStop()
 	close(stoppedCh)
+	return nil
 }

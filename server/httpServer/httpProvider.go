@@ -49,6 +49,6 @@ func (p *HttpProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	}
 }
 
-func (p *HttpProvider) Stop(ctx context.Context) {
-	p.httpSrver.Shutdown(ctx)
+func (p *HttpProvider) Stop(ctx context.Context) error {
+	return p.httpSrver.Shutdown(ctx)
 }

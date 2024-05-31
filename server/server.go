@@ -11,6 +11,7 @@ import (
 	"github.com/rbell/toolchest/server/grpcServer"
 	"github.com/rbell/toolchest/server/httpServer"
 	"github.com/rbell/toolchest/server/serverConfig"
+	"github.com/richardwilkes/toolbox/errs"
 	"sync"
 )
 
@@ -19,7 +20,7 @@ import (
 
 type ServiceProvider interface {
 	Start(startWg, stopWg *sync.WaitGroup)
-	Stop(ctx context.Context)
+	Stop(ctx context.Context) error
 }
 
 type Server struct {
@@ -64,9 +65,13 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	var err error
 	for _, provider := range s.providers {
-		provider.Stop(ctx)
+		e := provider.Stop(ctx)
+		if e != nil {
+			err = errs.Append(err, e)
+		}
 	}
 	s.stopProvidersWg.Wait()
-	return nil
+	return err
 }
