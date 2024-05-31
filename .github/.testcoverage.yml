@@ -41,6 +41,8 @@ exclude:
     - ^workqueue/models.go$ # exclude file `workqueue/models.go` since its models and no logic
     - ^rankCalculation/rankCalculatorOptions.go$ # exclude file `rankCalculation/rankCalculatorOptions.go` since it overrides the default options
     - ^server # exclude package `server` for now
+    - ^.*example.*$ # exclude all examples
+    - ^.*/cmd/.*$ # exclude all cmd packages
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by
