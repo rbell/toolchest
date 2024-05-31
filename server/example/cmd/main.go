@@ -35,19 +35,25 @@ func main() {
 				EnableReflection()).
 		Build()
 
+	// wait group to wait for server to stop
 	wg := &sync.WaitGroup{}
+	// create server, passing in configuration, startup context and wait group.
 	srvr, err := server.NewServer(cfg, context.Background(), wg)
 	if err != nil {
 		log.Fatalf("Error creating server: %v", err)
 	}
 
+	// register a function to stop the server when the application exits (in this example we use the atexit library to register the function)
 	atexit.Register(func() {
+		// context with timeout for server to stop
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer stopCancel()
 		srvr.Stop(stopCtx)
 	})
 
+	// start the server
 	srvr.Start()
 
+	// wait for server to stop
 	wg.Wait()
 }
