@@ -16,6 +16,7 @@ The example folder contains a simple example of an HTTP server that listens on p
 - Support for configuring middleware
 - Support for configuring health checks (with default implementation)
 - Support for configuring logging
+- Improve Unit Testing
 
 ## License
 
