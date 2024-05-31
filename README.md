@@ -35,7 +35,10 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - Provides a set of proposition functions in Go. These functions allow evaluations of various conditions on various types, each function returning either true or false.
 - SliceOps
   - Provides a set of utility functions for working with slices in Go. These functions include operations such as cutting, removing, inserting, filtering, pushing, popping, and more.
-
+- Server
+  - A starting point for setting up and managing HTTP and/or gRPC services.
+  - Serve both HTTP and gRPC services from single server.
+  - Ability to configuration via configuration builder with chaining.
 - Additional tools to come!
 
 ## Contribution
