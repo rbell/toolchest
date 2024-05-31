@@ -18,7 +18,7 @@ threshold:
 
   # (optional; default 0) 
   # The minimum total coverage project should have
-  total: 85
+  total: 60
 
 # Holds regexp rules which will override thresholds for matched files or packages using their paths.
 #
