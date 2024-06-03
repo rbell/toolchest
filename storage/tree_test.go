@@ -216,6 +216,7 @@ func TestTree_Walk(t *testing.T) {
 		{"top", "child2", "child2.2"},
 	}
 	for _, ancestry := range ancestries {
+		//nolint:errcheck // ignore errorlint error for test
 		AddAncestryChain(tree, ancestry...)
 	}
 
@@ -248,6 +249,7 @@ func TestTree_Walk_UsingLevels(t *testing.T) {
 		{"top", "child2", "child2.2"},
 	}
 	for _, ancestry := range ancestries {
+		//nolint:errcheck // ignore errorlint error for test
 		AddAncestryChain(tree, ancestry...)
 	}
 
