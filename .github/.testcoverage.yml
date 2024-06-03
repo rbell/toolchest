@@ -4,7 +4,7 @@ profile: cover.out
 
 # (optional) 
 # When specified reported file paths will not contain local prefix in the output
-local-prefix: "github.com/org/project"
+local-prefix: "github.com/rbell/toolchest"
 
 # Holds coverage thresholds percentages, values should be in range [0-100]
 threshold:

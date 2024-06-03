@@ -16,7 +16,6 @@ import (
 )
 
 // TODO: Support for hosting tls
-// TODO: Support for hosting grpc
 
 type ServiceProvider interface {
 	Start(startWg, stopWg *sync.WaitGroup)

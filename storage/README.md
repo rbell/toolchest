@@ -131,3 +131,39 @@ To clone the BTree:
 ```go
 clone := btree.Clone()
 ```
+
+# Tree
+
+Tree provides a generic tree data structure with methods for adding and walking through the tree.
+
+## Usage
+
+Here are some examples of how to use the `Tree` package:
+
+### Creating a new tree
+
+```go
+factory := func(value string) storage.childAdderGetter[string] {
+    return NewNode(value)
+}
+tree := storage.NewTree(factory)
+```
+
+### Adding an ancestry chain to the tree
+```go
+ancestry := []string{"top", "child1", "child1.1"}
+    err := storage.AddAncestryChain(tree, ancestry...)
+    if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Walking through the tree
+```go
+tree.Walk(func(s string, level int) {
+    fmt.Println(strings.Repeat("->", level), s)
+})
+```
+
+# License
+This project is licensed under the Apache Public License, version 2.0. See the LICENSE file for details.
