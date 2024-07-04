@@ -50,7 +50,7 @@ func main() {
 		stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Second*30)
 		//nolint:errcheck // ignore lint error for example
 		defer stopCancel()
-		stopCtx.Err()
+
 		//nolint:errcheck // ignore errorlint error for example
 		srvr.Stop(stopCtx)
 	})
