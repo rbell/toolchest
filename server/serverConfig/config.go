@@ -6,10 +6,13 @@
 
 package serverConfig
 
+import "log/slog"
+
 type Config struct {
 	httpServerConfig  *HttpServerConfig
 	httpsServerConfig *HttpsServerConfig
 	grpcServerConfig  *GrpcServerConfig
+	logger            *slog.Logger
 }
 
 func (c *Config) Validate() error {
@@ -26,4 +29,8 @@ func (c *Config) GetHttpsServerConfig() *HttpsServerConfig {
 
 func (c *Config) GetGrpcServerConfig() *GrpcServerConfig {
 	return c.grpcServerConfig
+}
+
+func (c *Config) GetLogger() *slog.Logger {
+	return c.logger
 }

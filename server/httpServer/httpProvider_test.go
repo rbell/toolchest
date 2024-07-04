@@ -8,6 +8,8 @@ package httpServer
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"sync"
 	"testing"
 
@@ -24,10 +26,11 @@ func TestHttpProvider_Start_NonTLS_ListenAndServes(t *testing.T) {
 	provider := &HttpProvider{
 		httpSrver: mListener,
 		isTLS:     false,
+		logger:    slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	// test
-	provider.Start(wg, wg)
+	provider.Start(context.Background(), wg, wg)
 
 	// verify
 	mListener.AssertExpectations(t)
@@ -43,10 +46,11 @@ func TestHttpProvider_Start_TLS_ListenAndServes(t *testing.T) {
 	provider := &HttpProvider{
 		httpSrver: mListener,
 		isTLS:     true,
+		logger:    slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	// test
-	provider.Start(wg, wg)
+	provider.Start(context.Background(), wg, wg)
 
 	// verify
 	mListener.AssertExpectations(t)
@@ -62,6 +66,7 @@ func TestHttpProvider_Stop_ClosesServer(t *testing.T) {
 
 	provider := &HttpProvider{
 		httpSrver: mListener,
+		logger:    slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	// test

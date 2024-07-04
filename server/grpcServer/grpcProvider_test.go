@@ -8,7 +8,9 @@ package grpcServer
 
 import (
 	"context"
+	"log/slog"
 	"net"
+	"os"
 	"sync"
 	"testing"
 
@@ -32,12 +34,13 @@ func TestGrpcProvider_Start(t *testing.T) {
 		listenerFactory: func(string, string) (net.Listener, error) {
 			return mListener, nil
 		},
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
 	// test
-	provider.Start(wg, wg)
+	provider.Start(context.Background(), wg, wg)
 
 	// verify
 	mGrpcServer.AssertExpectations(t)
@@ -49,6 +52,7 @@ func TestGrpcProvider_Stop(t *testing.T) {
 	mGrpcServer.On("GracefulStop").Return()
 	provider := &GrpcProvider{
 		grpcServer: mGrpcServer,
+		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	// test
