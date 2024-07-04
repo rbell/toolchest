@@ -42,6 +42,7 @@ exclude:
     - ^rankCalculation/rankCalculatorOptions.go$ # exclude file `rankCalculation/rankCalculatorOptions.go` since it overrides the default options
     - ^.*example.*$ # exclude all examples
     - ^.*/cmd/.*$ # exclude all cmd packages
+    - ^.*/mock_.*$ # exclude all test packages
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by
