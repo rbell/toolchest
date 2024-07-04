@@ -15,8 +15,6 @@ import (
 	"sync"
 )
 
-// TODO: Support for hosting tls
-
 type ServiceProvider interface {
 	Start(startWg, stopWg *sync.WaitGroup)
 	Stop(ctx context.Context) error
@@ -38,6 +36,10 @@ func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *syn
 
 	if httpCfg := cfg.GetHttpServerConfig(); httpCfg != nil {
 		providers = append(providers, httpServer.NewHttpProvider(httpCfg))
+	}
+
+	if httpsCfg := cfg.GetHttpsServerConfig(); httpsCfg != nil {
+		providers = append(providers, httpServer.NewHttpsProvider(httpsCfg))
 	}
 
 	if grpcCfg := cfg.GetGrpcServerConfig(); grpcCfg != nil {

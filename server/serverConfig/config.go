@@ -7,8 +7,9 @@
 package serverConfig
 
 type Config struct {
-	httpServerConfig *HttpServerConfig
-	grpcServerConfig *GrpcServerConfig
+	httpServerConfig  *HttpServerConfig
+	httpsServerConfig *HttpsServerConfig
+	grpcServerConfig  *GrpcServerConfig
 }
 
 func (c *Config) Validate() error {
@@ -17,6 +18,10 @@ func (c *Config) Validate() error {
 
 func (c *Config) GetHttpServerConfig() *HttpServerConfig {
 	return c.httpServerConfig
+}
+
+func (c *Config) GetHttpsServerConfig() *HttpsServerConfig {
+	return c.httpsServerConfig
 }
 
 func (c *Config) GetGrpcServerConfig() *GrpcServerConfig {

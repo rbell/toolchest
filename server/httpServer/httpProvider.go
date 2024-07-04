@@ -9,16 +9,19 @@ package httpServer
 import (
 	"context"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/rbell/toolchest/server/serverConfig"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/rbell/toolchest/server/serverConfig"
 )
 
 type HttpProvider struct {
 	httpSrver *http.Server
 	router    *httprouter.Router
+	certFile  string
+	keyFile   string
 }
 
 func NewHttpProvider(cfg *serverConfig.HttpServerConfig) *HttpProvider {
@@ -38,11 +41,29 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig) *HttpProvider {
 	return provider
 }
 
+func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig) *HttpProvider {
+	provider := NewHttpProvider(cfg.HttpServerConfig)
+	provider.httpSrver.TLSConfig = cfg.GetTlsConfig()
+	provider.certFile = cfg.GetCertFile()
+	provider.keyFile = cfg.GetKeyFile()
+
+	return provider
+}
+
 func (p *HttpProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	defer stopWg.Done()
 
 	startWg.Done()
 	fmt.Println("HTTP Server started on port: ", p.httpSrver.Addr)
+
+	if p.httpSrver.TLSConfig != nil {
+		err := p.httpSrver.ListenAndServeTLS(p.certFile, p.keyFile)
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	err := p.httpSrver.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
