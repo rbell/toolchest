@@ -31,6 +31,19 @@ override:
     path: ^pworkqueue/models.go$
   - threshold: 20
     path: ^workqueue/options.go$
+  - threshold: 0
+    path: ^server/server.go$
+  - threshold: 45
+    path: ^server/grpcServer/grpcProvider.go$
+  - threshold: 30
+    path: ^server/httpServer/httpProvider.go$
+  - threshold: 0
+    path: ^server$
+  - threshold: 45
+    path: ^server/grpcServer$
+  - threshold: 30
+    path: ^server/httpServer$
+
 
 # Holds regexp rules which will exclude matched files or packages from coverage statistics
 exclude:
