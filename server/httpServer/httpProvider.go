@@ -9,11 +9,12 @@ package httpServer
 import (
 	"context"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/rbell/toolchest/server/serverConfig"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/rbell/toolchest/server/serverConfig"
 )
 
 type HttpProvider struct {
