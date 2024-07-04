@@ -9,47 +9,58 @@ package grpcServer
 import (
 	"context"
 	"fmt"
-	"github.com/rbell/toolchest/server/serverConfig"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"sync"
+
+	"github.com/rbell/toolchest/server/serverConfig"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
+type grpcServerer interface {
+	Serve(lis net.Listener) error
+	Stop()
+	GracefulStop()
+}
+
+type listenerFactory func(string, string) (net.Listener, error)
+
 type GrpcProvider struct {
-	grpcServer *grpc.Server
-	cfg        *serverConfig.GrpcServerConfig
+	grpcServer      grpcServerer
+	cfg             *serverConfig.GrpcServerConfig
+	listenerFactory listenerFactory
 }
 
 func NewGrpcProvider(cfg *serverConfig.GrpcServerConfig) *GrpcProvider {
+	srvr := grpc.NewServer(cfg.GetOpts()...)
 	provider := &GrpcProvider{
-		grpcServer: grpc.NewServer(cfg.GetOpts()...),
-		cfg:        cfg,
+		grpcServer:      srvr,
+		cfg:             cfg,
+		listenerFactory: net.Listen,
 	}
 
 	for desc, impl := range cfg.GetRegistrations() {
-		provider.grpcServer.RegisterService(desc, impl)
+		srvr.RegisterService(desc, impl)
 	}
 
 	if cfg.IsReflectionEnabled() {
-		reflection.Register(provider.grpcServer)
+		reflection.Register(srvr)
 	}
 
 	for _, initializer := range cfg.GetInitializers() {
-		initializer(provider.grpcServer)
+		initializer(srvr)
 	}
 	return provider
 }
 
 func (p *GrpcProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	defer stopWg.Done()
-	ls, err := net.Listen("tcp", fmt.Sprintf(":%s", p.cfg.Port))
+	ls, err := p.listenerFactory("tcp", fmt.Sprintf(":%s", p.cfg.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("GRPC Server started on port: ", p.cfg.Port)
 	startWg.Done()
 	err = p.grpcServer.Serve(ls)
 	if err != nil {

@@ -8,6 +8,7 @@ package serverConfig
 
 import (
 	"crypto/tls"
+
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -16,7 +17,9 @@ type HttpsServerConfigBuilder struct {
 }
 
 func BuildHttpsServiceConfig() *HttpsServerConfigBuilder {
-	return &HttpsServerConfigBuilder{cfg: &HttpsServerConfig{}}
+	return &HttpsServerConfigBuilder{cfg: &HttpsServerConfig{
+		HttpServerConfig: BuildHttpServiceConfig().build(),
+	}}
 }
 
 func (b *HttpsServerConfigBuilder) WithPort(port string) *HttpsServerConfigBuilder {
@@ -25,28 +28,22 @@ func (b *HttpsServerConfigBuilder) WithPort(port string) *HttpsServerConfigBuild
 }
 
 func (b *HttpsServerConfigBuilder) AddRoute(method, path string, handler httprouter.Handle) *HttpsServerConfigBuilder {
-	if b.cfg.routes == nil {
-		b.cfg.routes = map[string]map[string]httprouter.Handle{}
-	}
-	if b.cfg.routes[method] == nil {
-		b.cfg.routes[method] = map[string]httprouter.Handle{}
-	}
-	b.cfg.routes[method][path] = handler
+	b.cfg.AddRoute(method, path, handler)
 	return b
 }
 
 func (b *HttpsServerConfigBuilder) WithTlsConfig(tlsConfig *tls.Config) *HttpsServerConfigBuilder {
-	b.cfg.tlsConfig = tlsConfig
+	b.cfg.SetTlsConfig(tlsConfig)
 	return b
 }
 
 func (b *HttpsServerConfigBuilder) WithCertFile(certFile string) *HttpsServerConfigBuilder {
-	b.cfg.certFile = certFile
+	b.cfg.SetCertFile(certFile)
 	return b
 }
 
 func (b *HttpsServerConfigBuilder) WithKeyFile(keyFile string) *HttpsServerConfigBuilder {
-	b.cfg.keyFile = keyFile
+	b.cfg.SetKeyFile(keyFile)
 	return b
 }
 

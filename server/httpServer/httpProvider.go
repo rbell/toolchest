@@ -17,35 +17,60 @@ import (
 	"github.com/rbell/toolchest/server/serverConfig"
 )
 
+type httpListener interface {
+	ListenAndServe() error
+	ListenAndServeTLS(certFile, keyFile string) error
+	Shutdown(ctx context.Context) error
+}
+
 type HttpProvider struct {
-	httpSrver *http.Server
-	router    *httprouter.Router
+	httpSrver httpListener
+	address   string
+	isTLS     bool
 	certFile  string
 	keyFile   string
 }
 
 func NewHttpProvider(cfg *serverConfig.HttpServerConfig) *HttpProvider {
+	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
 	provider := &HttpProvider{
-		httpSrver: &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)},
-		router:    httprouter.New(),
+		httpSrver: srvr,
+		isTLS:     false,
+		address:   fmt.Sprintf(":%v", cfg.Port),
 	}
+
+	router := httprouter.New()
 
 	for method, paths := range cfg.GetRoutes() {
 		for path, handler := range paths {
-			provider.router.Handle(method, path, handler)
+			router.Handle(method, path, handler)
 		}
 	}
 
-	provider.httpSrver.Handler = provider.router
+	srvr.Handler = router
 
 	return provider
 }
 
 func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig) *HttpProvider {
-	provider := NewHttpProvider(cfg.HttpServerConfig)
-	provider.httpSrver.TLSConfig = cfg.GetTlsConfig()
-	provider.certFile = cfg.GetCertFile()
-	provider.keyFile = cfg.GetKeyFile()
+	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
+	srvr.TLSConfig = cfg.GetTlsConfig()
+
+	provider := &HttpProvider{
+		httpSrver: srvr,
+		certFile:  cfg.GetCertFile(),
+		keyFile:   cfg.GetKeyFile(),
+		isTLS:     true,
+		address:   fmt.Sprintf(":%v", cfg.Port),
+	}
+
+	router := httprouter.New()
+
+	for method, paths := range cfg.GetRoutes() {
+		for path, handler := range paths {
+			router.Handle(method, path, handler)
+		}
+	}
 
 	return provider
 }
@@ -54,9 +79,8 @@ func (p *HttpProvider) Start(startWg, stopWg *sync.WaitGroup) {
 	defer stopWg.Done()
 
 	startWg.Done()
-	fmt.Println("HTTP Server started on port: ", p.httpSrver.Addr)
 
-	if p.httpSrver.TLSConfig != nil {
+	if p.isTLS {
 		err := p.httpSrver.ListenAndServeTLS(p.certFile, p.keyFile)
 		if err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
