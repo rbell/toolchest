@@ -13,7 +13,7 @@ type GrpcServerConfigBuilder struct {
 }
 
 func BuildGrpcServerConfig() *GrpcServerConfigBuilder {
-	return &GrpcServerConfigBuilder{cfg: &GrpcServerConfig{}}
+	return &GrpcServerConfigBuilder{cfg: &GrpcServerConfig{registrations: make(map[*grpc.ServiceDesc]any)}}
 }
 
 func (b *GrpcServerConfigBuilder) WithPort(port string) *GrpcServerConfigBuilder {

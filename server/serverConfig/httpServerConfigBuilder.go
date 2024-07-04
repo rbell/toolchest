@@ -22,13 +22,7 @@ func (b *HttpServerConfigBuilder) WithPort(port string) *HttpServerConfigBuilder
 }
 
 func (b *HttpServerConfigBuilder) AddRoute(method, path string, handler httprouter.Handle) *HttpServerConfigBuilder {
-	if b.cfg.routes == nil {
-		b.cfg.routes = map[string]map[string]httprouter.Handle{}
-	}
-	if b.cfg.routes[method] == nil {
-		b.cfg.routes[method] = map[string]httprouter.Handle{}
-	}
-	b.cfg.routes[method][path] = handler
+	b.cfg.AddRoute(method, path, handler)
 	return b
 }
 
