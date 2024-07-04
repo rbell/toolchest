@@ -12,6 +12,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rbell/toolchest/server/grpcServer/netMocks"
 	"github.com/rbell/toolchest/server/serverConfig"
 )
@@ -48,9 +50,11 @@ func TestGrpcProvider_Stop(t *testing.T) {
 	provider := &GrpcProvider{
 		grpcServer: mGrpcServer,
 	}
+
 	// test
-	provider.Stop(context.Background())
+	err := provider.Stop(context.Background())
 
 	// verify
+	assert.Nil(t, err)
 	mGrpcServer.AssertExpectations(t)
 }

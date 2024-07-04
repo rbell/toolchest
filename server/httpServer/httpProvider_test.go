@@ -10,6 +10,8 @@ import (
 	"context"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHttpProvider_Start_NonTLS_ListenAndServes(t *testing.T) {
@@ -63,8 +65,9 @@ func TestHttpProvider_Stop_ClosesServer(t *testing.T) {
 	}
 
 	// test
-	provider.Stop(ctx)
+	err := provider.Stop(ctx)
 
 	// verify
+	assert.Nil(t, err)
 	mListener.AssertExpectations(t)
 }
