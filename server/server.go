@@ -8,15 +8,18 @@ package server
 
 import (
 	"context"
+	"log/slog"
+	"os"
+	"sync"
+
 	"github.com/rbell/toolchest/server/grpcServer"
 	"github.com/rbell/toolchest/server/httpServer"
 	"github.com/rbell/toolchest/server/serverConfig"
 	"github.com/richardwilkes/toolbox/errs"
-	"sync"
 )
 
 type ServiceProvider interface {
-	Start(startWg, stopWg *sync.WaitGroup)
+	Start(ctx context.Context, startWg, stopWg *sync.WaitGroup)
 	Stop(ctx context.Context) error
 }
 
@@ -24,9 +27,15 @@ type Server struct {
 	providers       []ServiceProvider
 	stopProvidersWg *sync.WaitGroup
 	runningCtx      context.Context
+	logger          *slog.Logger
 }
 
 func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *sync.WaitGroup) (*Server, error) {
+	logger := cfg.GetLogger()
+	if logger == nil {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	}
+
 	err := cfg.Validate()
 	if err != nil {
 		return nil, err
@@ -35,30 +44,31 @@ func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *syn
 	providers := []ServiceProvider{}
 
 	if httpCfg := cfg.GetHttpServerConfig(); httpCfg != nil {
-		providers = append(providers, httpServer.NewHttpProvider(httpCfg))
+		providers = append(providers, httpServer.NewHttpProvider(httpCfg, logger))
 	}
 
 	if httpsCfg := cfg.GetHttpsServerConfig(); httpsCfg != nil {
-		providers = append(providers, httpServer.NewHttpsProvider(httpsCfg))
+		providers = append(providers, httpServer.NewHttpsProvider(httpsCfg, logger))
 	}
 
 	if grpcCfg := cfg.GetGrpcServerConfig(); grpcCfg != nil {
-		providers = append(providers, grpcServer.NewGrpcProvider(grpcCfg))
+		providers = append(providers, grpcServer.NewGrpcProvider(grpcCfg, logger))
 	}
 
 	return &Server{
 		providers:       providers,
 		stopProvidersWg: stopWg,
 		runningCtx:      runningCtx,
+		logger:          logger,
 	}, nil
 }
 
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	startWg := &sync.WaitGroup{}
 	for _, provider := range s.providers {
 		s.stopProvidersWg.Add(1)
 		startWg.Add(1)
-		go provider.Start(startWg, s.stopProvidersWg)
+		go provider.Start(ctx, startWg, s.stopProvidersWg)
 	}
 
 	startWg.Wait()

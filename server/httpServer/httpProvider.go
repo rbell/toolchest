@@ -9,7 +9,7 @@ package httpServer
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -29,14 +29,16 @@ type HttpProvider struct {
 	isTLS     bool
 	certFile  string
 	keyFile   string
+	logger    *slog.Logger
 }
 
-func NewHttpProvider(cfg *serverConfig.HttpServerConfig) *HttpProvider {
+func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger *slog.Logger) *HttpProvider {
 	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
 	provider := &HttpProvider{
 		httpSrver: srvr,
 		isTLS:     false,
 		address:   fmt.Sprintf(":%v", cfg.Port),
+		logger:    logger,
 	}
 
 	router := httprouter.New()
@@ -52,7 +54,7 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig) *HttpProvider {
 	return provider
 }
 
-func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig) *HttpProvider {
+func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger *slog.Logger) *HttpProvider {
 	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
 	srvr.TLSConfig = cfg.GetTlsConfig()
 
@@ -62,6 +64,7 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig) *HttpProvider {
 		keyFile:   cfg.GetKeyFile(),
 		isTLS:     true,
 		address:   fmt.Sprintf(":%v", cfg.Port),
+		logger:    logger,
 	}
 
 	router := httprouter.New()
@@ -75,25 +78,35 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig) *HttpProvider {
 	return provider
 }
 
-func (p *HttpProvider) Start(startWg, stopWg *sync.WaitGroup) {
+func (p *HttpProvider) Start(ctx context.Context, startWg, stopWg *sync.WaitGroup) {
 	defer stopWg.Done()
 
 	startWg.Done()
 
 	if p.isTLS {
+		p.logger.InfoContext(ctx, fmt.Sprintf("Starting HTTPS server on %v", p.address))
 		err := p.httpSrver.ListenAndServeTLS(p.certFile, p.keyFile)
 		if err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
+			p.logger.ErrorContext(ctx, fmt.Sprintf("Error Starting HTTPS server on %v", p.address), slog.Any("error", err.Error()))
 		}
 		return
 	}
 
+	p.logger.InfoContext(ctx, fmt.Sprintf("Starting HTTP server on %v", p.address))
 	err := p.httpSrver.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		p.logger.ErrorContext(ctx, fmt.Sprintf("Error Starting HTTP server on %v", p.address), slog.Any("error", err.Error()))
 	}
 }
 
 func (p *HttpProvider) Stop(ctx context.Context) error {
+	defer func() {
+		if p.isTLS {
+			p.logger.InfoContext(ctx, "Stopped HTTPS server")
+		} else {
+			p.logger.InfoContext(ctx, "Stopped HTTP server")
+		}
+	}()
+
 	return p.httpSrver.Shutdown(ctx)
 }

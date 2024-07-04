@@ -6,12 +6,19 @@
 
 package serverConfig
 
+import "log/slog"
+
 type ServerConfigBuilder struct {
 	cfg *Config
 }
 
 func BuildServerConfig() *ServerConfigBuilder {
 	return &ServerConfigBuilder{cfg: &Config{}}
+}
+
+func (b *ServerConfigBuilder) WithLogger(logger *slog.Logger) *ServerConfigBuilder {
+	b.cfg.logger = logger
+	return b
 }
 
 func (b *ServerConfigBuilder) WithHttpServiceConfig(httpBuilder *HttpServerConfigBuilder) *ServerConfigBuilder {

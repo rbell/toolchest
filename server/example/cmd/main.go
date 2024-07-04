@@ -8,16 +8,17 @@ package main
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/rbell/toolchest/server"
 	"github.com/rbell/toolchest/server/example/grpcService"
 	"github.com/rbell/toolchest/server/example/proto"
 	"github.com/rbell/toolchest/server/serverConfig"
 	"github.com/richardwilkes/toolbox/atexit"
-	"log"
-	"net/http"
-	"sync"
-	"time"
 )
 
 func main() {
@@ -56,7 +57,7 @@ func main() {
 	})
 
 	// start the server
-	err = srvr.Start()
+	err = srvr.Start(context.Background())
 	if err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
