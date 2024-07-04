@@ -17,8 +17,6 @@ import (
 	"github.com/rbell/toolchest/server/serverConfig"
 )
 
-type httpServerOption func(server *http.Server)
-
 type HttpProvider struct {
 	httpSrver *http.Server
 	router    *httprouter.Router
