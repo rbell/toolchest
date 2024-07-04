@@ -19,6 +19,11 @@ func (b *ServerConfigBuilder) WithHttpServiceConfig(httpBuilder *HttpServerConfi
 	return b
 }
 
+func (b *ServerConfigBuilder) WithHttpsServiceConfig(httpsBuilder *HttpsServerConfigBuilder) *ServerConfigBuilder {
+	b.cfg.httpsServerConfig = httpsBuilder.build()
+	return b
+}
+
 func (b *ServerConfigBuilder) WithGrpcServiceConfig(grpcBuilder *GrpcServerConfigBuilder) *ServerConfigBuilder {
 	b.cfg.grpcServerConfig = grpcBuilder.build()
 	return b
