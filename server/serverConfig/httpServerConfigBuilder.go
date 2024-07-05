@@ -6,7 +6,11 @@
 
 package serverConfig
 
-import "github.com/julienschmidt/httprouter"
+import (
+	"net/http"
+
+	"github.com/rbell/toolchest/server/httpMiddleware"
+)
 
 type HttpServerConfigBuilder struct {
 	cfg *HttpServerConfig
@@ -16,12 +20,17 @@ func BuildHttpServiceConfig() *HttpServerConfigBuilder {
 	return &HttpServerConfigBuilder{cfg: &HttpServerConfig{}}
 }
 
+func (b *HttpServerConfigBuilder) UsingMiddleWare(middleware httpMiddleware.HttpHandlerMiddleware) *HttpServerConfigBuilder {
+	b.cfg.SetMiddleware(middleware)
+	return b
+}
+
 func (b *HttpServerConfigBuilder) WithPort(port string) *HttpServerConfigBuilder {
 	b.cfg.Port = port
 	return b
 }
 
-func (b *HttpServerConfigBuilder) AddRoute(method, path string, handler httprouter.Handle) *HttpServerConfigBuilder {
+func (b *HttpServerConfigBuilder) AddRoute(method, path string, handler http.HandlerFunc) *HttpServerConfigBuilder {
 	b.cfg.AddRoute(method, path, handler)
 	return b
 }

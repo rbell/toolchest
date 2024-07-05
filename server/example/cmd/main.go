@@ -9,11 +9,14 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/rbell/toolchest/server/httpMiddleware"
+
 	"github.com/rbell/toolchest/server"
 	"github.com/rbell/toolchest/server/example/grpcService"
 	"github.com/rbell/toolchest/server/example/proto"
@@ -22,11 +25,19 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	// set up middleware to log both request and response.
+	// Don't like the way the middleware logs? Implement your own middleware using the ones supplied as patterns.
+	middleware := httpMiddleware.BundleMiddleware(httpMiddleware.LogRequest(logger), httpMiddleware.LogResponse(logger))
+
 	cfg := serverConfig.BuildServerConfig().
+		WithLogger(logger).
 		WithHttpServiceConfig(
 			serverConfig.BuildHttpServiceConfig().
+				UsingMiddleWare(middleware).
 				WithPort("8080").
-				AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+				AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request) {
 					//nolint:errcheck // ignore lint error for example
 					w.Write([]byte("Hello, World!"))
 				})).

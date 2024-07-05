@@ -43,9 +43,14 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger *slog.Logger) *H
 
 	router := httprouter.New()
 
+	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
 		for path, handler := range paths {
-			router.Handle(method, path, handler)
+			h := handler
+			if middleware != nil {
+				h = middleware(handler)
+			}
+			router.HandlerFunc(method, path, h)
 		}
 	}
 
@@ -69,9 +74,14 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger *slog.Logger) 
 
 	router := httprouter.New()
 
+	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
 		for path, handler := range paths {
-			router.Handle(method, path, handler)
+			h := handler
+			if middleware != nil {
+				h = middleware(handler)
+			}
+			router.HandlerFunc(method, path, h)
 		}
 	}
 
