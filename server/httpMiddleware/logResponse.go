@@ -9,7 +9,6 @@ package httpMiddleware
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 )
@@ -53,18 +52,6 @@ func LogResponse(logger *slog.Logger) HttpHandlerMiddleware {
 	}
 }
 
-func getResponseAsString(r *http.Request) (string, error) {
-	bodyBytes, err := io.ReadAll(r.Response.Body)
-	if err != nil {
-		return "", err
-	}
-	// It's a good practice to close the body to avoid resource leaks
-	defer r.Body.Close()
-
-	bodyString := string(bodyBytes)
-	return bodyString, nil
-}
-
 // ResponseWriterWrapper struct is used to log the response
 type ResponseWriterWrapper struct {
 	w          *http.ResponseWriter
@@ -97,16 +84,6 @@ func (rww ResponseWriterWrapper) Header() http.Header {
 func (rww ResponseWriterWrapper) WriteHeader(statusCode int) {
 	(*rww.statusCode) = statusCode
 	(*rww.w).WriteHeader(statusCode)
-}
-
-func (rww ResponseWriterWrapper) getHeaders() string {
-	var buf bytes.Buffer
-
-	for k, v := range (*rww.w).Header() {
-		buf.WriteString(fmt.Sprintf("%s: %v", k, v))
-	}
-
-	return buf.String()
 }
 
 func (rww ResponseWriterWrapper) getResponseBody() string {
