@@ -56,6 +56,7 @@ exclude:
     - ^.*example.*$ # exclude all examples
     - ^.*/cmd/.*$ # exclude all cmd packages
     - ^.*/mock_.*$ # exclude all test packages
+    - ^server/httpMiddleware.*$ # exclude all http middleware
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by

@@ -10,6 +10,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
 )
 
 type RequestLogDetail struct {
@@ -18,19 +20,18 @@ type RequestLogDetail struct {
 	Body   string
 }
 
-func LogRequest(logger *slog.Logger) HttpHandlerMiddleware {
+func LogRequest(logger sharedTypes.LogPublisher) HttpHandlerMiddleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			body, _ := getRequestBodyAsString(r)
-			ctx := r.Context()
-			if ctx == nil {
-				logger.Info("Request received", slog.Any("request", RequestLogDetail{Method: r.Method, URL: r.URL.Path, Body: body}))
-			} else {
-				logger.InfoContext(ctx, "Request received", slog.Any("request", RequestLogDetail{Method: r.Method, URL: r.URL.Path, Body: body}))
-			}
+			logRequest(logger, r)
 			next(w, r)
 		}
 	}
+}
+
+func logRequest(logger sharedTypes.LogPublisher, r *http.Request) {
+	body, _ := getRequestBodyAsString(r)
+	logger.InfoContext(r.Context(), "Request received", slog.Any("request", RequestLogDetail{Method: r.Method, URL: r.URL.Path, Body: body}))
 }
 
 func getRequestBodyAsString(r *http.Request) (string, error) {
@@ -38,7 +39,7 @@ func getRequestBodyAsString(r *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// It's a good practice to close the body to avoid resource leaks
+
 	//nolint:errcheck // skip error in defer
 	defer r.Body.Close()
 

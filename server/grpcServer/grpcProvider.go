@@ -13,6 +13,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
+
 	"github.com/rbell/toolchest/server/serverConfig"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -30,10 +32,10 @@ type GrpcProvider struct {
 	grpcServer      grpcServerer
 	cfg             *serverConfig.GrpcServerConfig
 	listenerFactory listenerFactory
-	logger          *slog.Logger
+	logger          sharedTypes.LogPublisher
 }
 
-func NewGrpcProvider(cfg *serverConfig.GrpcServerConfig, logger *slog.Logger) *GrpcProvider {
+func NewGrpcProvider(cfg *serverConfig.GrpcServerConfig, logger sharedTypes.LogPublisher) *GrpcProvider {
 	srvr := grpc.NewServer(cfg.GetOpts()...)
 	provider := &GrpcProvider{
 		grpcServer:      srvr,

@@ -6,13 +6,15 @@
 
 package serverConfig
 
-import "log/slog"
+import (
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
+)
 
 type Config struct {
 	httpServerConfig  *HttpServerConfig
 	httpsServerConfig *HttpsServerConfig
 	grpcServerConfig  *GrpcServerConfig
-	logger            *slog.Logger
+	logger            sharedTypes.LogPublisher
 }
 
 func (c *Config) Validate() error {
@@ -31,6 +33,6 @@ func (c *Config) GetGrpcServerConfig() *GrpcServerConfig {
 	return c.grpcServerConfig
 }
 
-func (c *Config) GetLogger() *slog.Logger {
+func (c *Config) GetLogger() sharedTypes.LogPublisher {
 	return c.logger
 }

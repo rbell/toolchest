@@ -6,7 +6,9 @@
 
 package httpMiddleware
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func BundleMiddleware(middleware ...HttpHandlerMiddleware) HttpHandlerMiddleware {
 	return func(next http.HandlerFunc) http.HandlerFunc {
