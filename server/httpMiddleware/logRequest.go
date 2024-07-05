@@ -39,6 +39,7 @@ func getRequestBodyAsString(r *http.Request) (string, error) {
 		return "", err
 	}
 	// It's a good practice to close the body to avoid resource leaks
+	//nolint:errcheck // skip error in defer
 	defer r.Body.Close()
 
 	bodyString := string(bodyBytes)
