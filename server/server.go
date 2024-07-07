@@ -12,6 +12,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
+
 	"github.com/rbell/toolchest/server/grpcServer"
 	"github.com/rbell/toolchest/server/httpServer"
 	"github.com/rbell/toolchest/server/serverConfig"
@@ -27,7 +29,7 @@ type Server struct {
 	providers       []ServiceProvider
 	stopProvidersWg *sync.WaitGroup
 	runningCtx      context.Context
-	logger          *slog.Logger
+	logger          sharedTypes.LogPublisher
 }
 
 func NewServer(cfg *serverConfig.Config, runningCtx context.Context, stopWg *sync.WaitGroup) (*Server, error) {

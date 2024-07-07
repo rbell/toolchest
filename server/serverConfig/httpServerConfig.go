@@ -6,23 +6,36 @@
 
 package serverConfig
 
-import "github.com/julienschmidt/httprouter"
+import (
+	"net/http"
+
+	"github.com/rbell/toolchest/server/httpMiddleware"
+)
 
 type HttpServerConfig struct {
-	Port   string
-	routes map[string]map[string]httprouter.Handle
+	Port       string
+	routes     map[string]map[string]http.HandlerFunc
+	middleware httpMiddleware.HttpHandlerMiddleware
 }
 
-func (c *HttpServerConfig) AddRoute(method, path string, handler httprouter.Handle) {
+func (c *HttpServerConfig) SetMiddleware(middleware httpMiddleware.HttpHandlerMiddleware) {
+	c.middleware = middleware
+}
+
+func (c *HttpServerConfig) GetMiddleware() httpMiddleware.HttpHandlerMiddleware {
+	return c.middleware
+}
+
+func (c *HttpServerConfig) AddRoute(method, path string, handler http.HandlerFunc) {
 	if c.routes == nil {
-		c.routes = map[string]map[string]httprouter.Handle{}
+		c.routes = map[string]map[string]http.HandlerFunc{}
 	}
 	if c.routes[method] == nil {
-		c.routes[method] = map[string]httprouter.Handle{}
+		c.routes[method] = map[string]http.HandlerFunc{}
 	}
 	c.routes[method][path] = handler
 }
 
-func (c *HttpServerConfig) GetRoutes() map[string]map[string]httprouter.Handle {
+func (c *HttpServerConfig) GetRoutes() map[string]map[string]http.HandlerFunc {
 	return c.routes
 }

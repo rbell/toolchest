@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/rbell/toolchest/server/serverConfig"
 )
@@ -29,10 +31,10 @@ type HttpProvider struct {
 	isTLS     bool
 	certFile  string
 	keyFile   string
-	logger    *slog.Logger
+	logger    sharedTypes.LogPublisher
 }
 
-func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger *slog.Logger) *HttpProvider {
+func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger sharedTypes.LogPublisher) *HttpProvider {
 	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
 	provider := &HttpProvider{
 		httpSrver: srvr,
@@ -43,9 +45,14 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger *slog.Logger) *H
 
 	router := httprouter.New()
 
+	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
 		for path, handler := range paths {
-			router.Handle(method, path, handler)
+			h := handler
+			if middleware != nil {
+				h = middleware(handler)
+			}
+			router.HandlerFunc(method, path, h)
 		}
 	}
 
@@ -54,7 +61,7 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger *slog.Logger) *H
 	return provider
 }
 
-func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger *slog.Logger) *HttpProvider {
+func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger sharedTypes.LogPublisher) *HttpProvider {
 	srvr := &http.Server{Addr: fmt.Sprintf(":%v", cfg.Port)}
 	srvr.TLSConfig = cfg.GetTlsConfig()
 
@@ -69,9 +76,14 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger *slog.Logger) 
 
 	router := httprouter.New()
 
+	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
 		for path, handler := range paths {
-			router.Handle(method, path, handler)
+			h := handler
+			if middleware != nil {
+				h = middleware(handler)
+			}
+			router.HandlerFunc(method, path, h)
 		}
 	}
 

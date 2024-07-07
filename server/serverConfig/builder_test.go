@@ -14,7 +14,6 @@ import (
 	"github.com/rbell/toolchest/server/example/grpcService"
 	"github.com/rbell/toolchest/server/example/proto"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +24,7 @@ func TestServerConfigBuilder_Build_BuildsHttpServiceConfig(t *testing.T) {
 	cfg := BuildServerConfig().WithHttpServiceConfig(
 		BuildHttpServiceConfig().
 			WithPort("8080").
-			AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request) {
 				//nolint:errcheck // ignore lint error for example
 				w.Write([]byte("Hello, World!"))
 			})).Build().GetHttpServerConfig()
@@ -54,7 +53,7 @@ func TestServerConfigBuilder_Build_BuildsHttpsServiceConfig(t *testing.T) {
 	cfg := BuildServerConfig().WithHttpsServiceConfig(
 		BuildHttpsServiceConfig().
 			WithPort("8443").
-			AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			AddRoute("GET", "/hello", func(w http.ResponseWriter, r *http.Request) {
 				//nolint:errcheck // ignore lint error for example
 				w.Write([]byte("Hello, World!"))
 			}).

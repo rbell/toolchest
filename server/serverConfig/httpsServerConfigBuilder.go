@@ -8,8 +8,7 @@ package serverConfig
 
 import (
 	"crypto/tls"
-
-	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
 type HttpsServerConfigBuilder struct {
@@ -27,7 +26,7 @@ func (b *HttpsServerConfigBuilder) WithPort(port string) *HttpsServerConfigBuild
 	return b
 }
 
-func (b *HttpsServerConfigBuilder) AddRoute(method, path string, handler httprouter.Handle) *HttpsServerConfigBuilder {
+func (b *HttpsServerConfigBuilder) AddRoute(method, path string, handler http.HandlerFunc) *HttpsServerConfigBuilder {
 	b.cfg.AddRoute(method, path, handler)
 	return b
 }

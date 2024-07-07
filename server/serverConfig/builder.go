@@ -6,7 +6,9 @@
 
 package serverConfig
 
-import "log/slog"
+import (
+	"github.com/rbell/toolchest/server/internal/sharedTypes"
+)
 
 type ServerConfigBuilder struct {
 	cfg *Config
@@ -16,7 +18,7 @@ func BuildServerConfig() *ServerConfigBuilder {
 	return &ServerConfigBuilder{cfg: &Config{}}
 }
 
-func (b *ServerConfigBuilder) WithLogger(logger *slog.Logger) *ServerConfigBuilder {
+func (b *ServerConfigBuilder) WithLogger(logger sharedTypes.LogPublisher) *ServerConfigBuilder {
 	b.cfg.logger = logger
 	return b
 }
