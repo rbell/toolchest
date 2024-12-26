@@ -15,7 +15,6 @@ import (
 
 	"github.com/rbell/toolchest/server/internal/sharedTypes"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/rbell/toolchest/server/serverConfig"
 )
 
@@ -43,7 +42,7 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger sharedTypes.LogP
 		logger:    logger,
 	}
 
-	router := httprouter.New()
+	routerMux := http.NewServeMux()
 
 	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
@@ -52,11 +51,11 @@ func NewHttpProvider(cfg *serverConfig.HttpServerConfig, logger sharedTypes.LogP
 			if middleware != nil {
 				h = middleware(handler)
 			}
-			router.HandlerFunc(method, path, h)
+			routerMux.Handle(fmt.Sprintf("%s %s", method, path), h)
 		}
 	}
 
-	srvr.Handler = router
+	srvr.Handler = routerMux
 
 	return provider
 }
@@ -74,7 +73,7 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger sharedTypes.Lo
 		logger:    logger,
 	}
 
-	router := httprouter.New()
+	routerMux := http.NewServeMux()
 
 	middleware := cfg.GetMiddleware()
 	for method, paths := range cfg.GetRoutes() {
@@ -83,7 +82,7 @@ func NewHttpsProvider(cfg *serverConfig.HttpsServerConfig, logger sharedTypes.Lo
 			if middleware != nil {
 				h = middleware(handler)
 			}
-			router.HandlerFunc(method, path, h)
+			routerMux.Handle(fmt.Sprintf("%s %s", method, path), h)
 		}
 	}
 
