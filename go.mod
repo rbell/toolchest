@@ -7,7 +7,6 @@ toolchain go1.22.2
 require (
 	github.com/google/btree v1.1.2
 	github.com/google/uuid v1.6.0
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/richardwilkes/toolbox v1.112.0
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/grpc v1.63.2
