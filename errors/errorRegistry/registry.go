@@ -5,3 +5,27 @@
  */
 
 package errorRegistry
+
+func init() {
+	reg = newRegistry()
+}
+
+var reg *registry
+
+type ErrorResolver interface {
+	ResolveError(error error) error
+}
+
+type registry struct {
+	resolvers []ErrorResolver
+}
+
+func newRegistry() *registry {
+	return &registry{
+		resolvers: make([]ErrorResolver, 0),
+	}
+}
+
+func RegisterResolver(resolver ErrorResolver) {
+	reg.resolvers = append(reg.resolvers, resolver)
+}
