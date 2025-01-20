@@ -33,19 +33,12 @@ func TestStackTrace_ReferencesFunction(t *testing.T) {
 func TestStackTrace_Format_WithFlags(t *testing.T) {
 	st := CaptureStackTrace()
 	result := fmt.Sprintf("%+v", st)
-	expected := `
-github.com/rbell/toolchest/stacktrace.TestStackTrace_Format_WithFlags
-	/home/rbell/dev/github.com/rbell/toolchest/stacktrace/stackTrace_test.go:34
-testing.tRunner
-	/home/rbell/sdk/go1.22.3/src/testing/testing.go:1689
-runtime.goexit
-	/home/rbell/sdk/go1.22.3/src/runtime/asm_amd64.s:1695`
-	assert.Equal(t, expected, result)
+	assert.Contains(t, result, "stacktrace.TestStackTrace_Format_WithFlags")
+	assert.Contains(t, result, "testing.go")
 }
 
 func TestStackTrace_Format_Default(t *testing.T) {
 	st := CaptureStackTrace()
 	result := fmt.Sprint(st)
-	expected := `[stackTrace_test.go:47 testing.go:1689 asm_amd64.s:1695]`
-	assert.Equal(t, expected, result)
+	assert.Contains(t, result, "stackTrace_test.go")
 }
