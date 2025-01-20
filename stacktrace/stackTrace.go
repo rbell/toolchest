@@ -193,7 +193,7 @@ func (s *stack) getStackTrace() StackTrace {
 func CaptureStackTrace() StackTrace {
 	const depth = 32
 	var pcs [depth]uintptr
-	n := runtime.Callers(3, pcs[:])
+	n := runtime.Callers(2, pcs[:])
 	var st stack = pcs[0:n]
 	return st.getStackTrace()
 }
@@ -208,8 +208,8 @@ func extractFunctionName(name string) string {
 
 func CurrentFileWithPath() string {
 	st := CaptureStackTrace()
-	if len(st) >= 1 {
-		return st[0].fileName()
+	if len(st) >= 2 {
+		return st[1].fileName()
 	}
 	return "unknown"
 }
