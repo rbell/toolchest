@@ -6,6 +6,12 @@
 
 package errorRegistry
 
+import (
+	"context"
+
+	"github.com/rbell/toolchest/stacktrace"
+)
+
 func init() {
 	reg = newRegistry()
 }
@@ -13,11 +19,12 @@ func init() {
 var reg *registry
 
 type ErrorResolver interface {
-	ResolveError(error error) error
+	ResolveError(error, context.Context, stacktrace.StackTrace) error
 }
 
 type registry struct {
-	resolvers []ErrorResolver
+	resolvers       []ErrorResolver
+	defaultResolver ErrorResolver
 }
 
 func newRegistry() *registry {
@@ -28,4 +35,25 @@ func newRegistry() *registry {
 
 func RegisterResolver(resolver ErrorResolver) {
 	reg.resolvers = append(reg.resolvers, resolver)
+}
+
+func DefaultResolver(resolver ErrorResolver) {
+	reg.defaultResolver = resolver
+}
+
+func ResolveError(err error, ctx context.Context) error {
+	st := stacktrace.CaptureStackTrace()
+	for _, resolver := range reg.resolvers {
+		if resolved := resolver.ResolveError(err, ctx, st); resolved != nil {
+			return resolved
+		}
+	}
+	if reg.defaultResolver != nil {
+		return reg.defaultResolver.ResolveError(err, ctx, st)
+	}
+	return err
+}
+
+func ClearResolvers() {
+	reg.resolvers = make([]ErrorResolver, 0)
 }
