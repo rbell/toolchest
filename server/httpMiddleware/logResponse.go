@@ -54,7 +54,7 @@ type ResponseWriterWrapper struct {
 // NewResponseWriterWrapper static function creates a wrapper for the http.ResponseWriter
 func newResponseWriterWrapper(w http.ResponseWriter) ResponseWriterWrapper {
 	var buf bytes.Buffer
-	var statusCode int = 200
+	var statusCode = 200
 	return ResponseWriterWrapper{
 		w:          &w,
 		body:       &buf,

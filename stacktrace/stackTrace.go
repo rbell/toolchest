@@ -176,6 +176,7 @@ func (s *stack) Format(st fmt.State, verb rune) {
 		case st.Flag('+'):
 			for _, pc := range *s {
 				f := frame(pc)
+				//nolint:errcheck // skip error
 				fmt.Fprintf(st, "\n%+v", f)
 			}
 		}

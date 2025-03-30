@@ -143,10 +143,7 @@ func TestSyncMap_Range(t *testing.T) {
 	count = 0
 	m.Range(func(key string, value int) bool {
 		count++
-		if key == "key2" {
-			return false
-		}
-		return true
+		return key != "key2"
 	})
 	assert.Equal(t, 2, count)
 }

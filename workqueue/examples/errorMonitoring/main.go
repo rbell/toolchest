@@ -45,7 +45,7 @@ func main() {
 			time.Sleep(time.Millisecond * 100) // emulate doing some processing
 			// emulate error thrown every 20th index
 			if index%20 == 0 {
-				return fmt.Errorf("Error on index %v", index)
+				return fmt.Errorf("error on index %v", index)
 			} else {
 				fmt.Printf("Doing some work! %v\n", index) // emulate logging
 			}
