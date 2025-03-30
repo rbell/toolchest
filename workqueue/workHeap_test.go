@@ -112,9 +112,9 @@ func TestWorkHeap_Priority_Pop(t *testing.T) {
 
 	// assert
 	// Popped results should be in priority order
-	assert.Equal(t, "work2", result1.(*workItem).QueuedWork.name)
-	assert.Equal(t, "work3", result2.(*workItem).QueuedWork.name)
-	assert.Equal(t, "work1", result3.(*workItem).QueuedWork.name)
+	assert.Equal(t, "work2", result1.(*workItem).name)
+	assert.Equal(t, "work3", result2.(*workItem).name)
+	assert.Equal(t, "work1", result3.(*workItem).name)
 }
 
 func TestWorkHeap_AdjustPriorities_ChangesPriorities(t *testing.T) {

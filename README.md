@@ -20,6 +20,14 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - Resize queue length
   - Dequeue work in queue
   - View work in queue and it's current state, priority and position in queue.
+- Publication package provides a generic publish-subscribe (pub/sub) mechanism for Go applications. It allows you to create publications to which multiple subscribers can listen. When a message is published, it's distributed to all relevant subscribers.
+  - **Generic:** Supports publishing and subscribing to messages of any type.
+  - **Filtering:** Subscribers can define filters to receive only messages that meet specific criteria.
+  - **Buffered Channels:** Subscribers receive messages through buffered channels, allowing for asynchronous message handling.
+  - **Concurrency-Safe:** Designed for concurrent use, ensuring safe message delivery in multi-threaded environments.
+  - **Timeout Support:** Control the maximum time spent attempting to deliver a message to a subscriber.
+  - **Clean Shutdown:** Gracefully close publications and subscriber channels.
+  - **Unsubscribe:** Subscribers can unsubscribe from a publication.
 - ValidationError
   - Facilitates error reflecting validation issues to a user. 
   - Supports warnings and errors
@@ -39,6 +47,8 @@ This Source Code Form is subject to the terms of the Apache Public License, vers
   - A starting point for setting up and managing HTTP and/or gRPC services.
   - Serve both HTTP and gRPC services from single server.
   - Ability to configuration via configuration builder with chaining.
+- Generic package contains standard library types that are not yet type safe using generics and wraps them in types that are type safe using generics.
+  - SyncMap wraps a sync.Map with a generic.
 - Additional tools to come!
 
 ## Contribution

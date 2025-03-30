@@ -58,6 +58,7 @@ func main() {
 	fmt.Println("After Queing Temprary Work")
 	printItems(q)
 
+	//nolint:errcheck // skip error
 	q.Dequeue(id)
 
 	fmt.Println("After Dequeue Temprary Work")

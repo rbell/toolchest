@@ -2,8 +2,9 @@ package storage
 
 import (
 	"cmp"
-	"github.com/google/btree"
 	"sync"
+
+	"github.com/google/btree"
 )
 
 type orderedItem[K cmp.Ordered, V any] struct {
@@ -34,7 +35,7 @@ func (t *OrderedBTree[K, V]) Set(key K, value *V) {
 	t.writeMux.Lock()
 	defer t.writeMux.Unlock()
 	orderedKey := orderedItem[K, V]{key, value}
-	t.BTree.ReplaceOrInsert(orderedKey)
+	t.ReplaceOrInsert(orderedKey)
 }
 
 // Get returns the value of type V for the key of type K.  If the key is not found, ok is returned as false.

@@ -100,7 +100,7 @@ func Intersection[T comparable](slices ...[]T) []T {
 	result := []T{}
 	for _, s := range slices {
 		for _, e := range s {
-			//nolint:gosimple // This is more readable than the suggested alternative.
+			//nolint:gosimple,staticcheck // This is more readable than the suggested alternative
 			if _, exists := intersectionMap[e]; exists {
 				intersectionMap[e]++
 			} else {
